@@ -1846,50 +1846,8 @@ islands appear similar to Lumiverse's native chat. */
 
 /* ── Dock shell (workspace mounted in a host dock panel) ───────────── */
 /* The host SpindleDockPanel owns outer chrome, edge pinning, collapse
-   chevron, and the native edge resize handle (_resizeHandle_*).
+   chevron, and the native edge resize handle.
    The shell frames the shared regions (body + statusbar). */
-
-/* Lumiverse SpindleDockPanel host resize handle styling:
-   Ensure the host's native resize handle (_resizeHandle_*) has proper
-   interactive dimensions, cursor, touch action, and hover accent line
-   matching Lumiverse's native Theme Editor dock. */
-[class*="_resizeHandle_"],
-[class*="resizeHandle"] {
-  position: relative;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  min-width: 6px;
-  height: 100%;
-  flex: none;
-  cursor: col-resize;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  z-index: 10;
-  outline: none;
-  background: transparent;
-}
-
-[class*="_resizeHandle_"]::after,
-[class*="resizeHandle"]::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 2px;
-  width: 2px;
-  background: transparent;
-  transition: background-color 140ms ease;
-  pointer-events: none;
-}
-
-[class*="_resizeHandle_"]:hover::after,
-[class*="_resizeHandle_"]:active::after,
-[class*="resizeHandle"]:hover::after,
-[class*="resizeHandle"]:active::after {
-  background: var(--lumiverse-accent, var(--lumiverse-primary, #6366f1));
-}
 
 /* The host renders the extension root (a bare div) inside SpindleDockPanel's
    scrollable content flex item. Anchor the root to the content area's

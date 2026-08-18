@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "name": "Luminote",
+  "identifier": "luminote",
+  "author": "Prolix OCs",
+  "github": "https://github.com/prolix-oc/luminote",
+  "homepage": "https://github.com/prolix-oc/luminote",
+  "description": "Coffee's Obsidian-style workspace for Lumiverse, published by Prolix OCs.",
+  "permissions": [
+    "app_manipulation",
+    "ui_panels",
+    "images",
+    "media",
+    "ephemeral_storage"
+  ],
+  "requested_capabilities": [
+    "dynamic_code_execution"
+  ],
+  "entry_backend": "dist/backend.js",
+  "entry_frontend": "dist/frontend.js",
+  "minimum_lumiverse_version": "1.0.0"
+}

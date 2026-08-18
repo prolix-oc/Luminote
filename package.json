@@ -1,0 +1,35 @@
+{
+  "name": "luminote",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Coffee's Obsidian-style vault workspace for Lumiverse, published by Prolix OCs",
+  "author": "Prolix OCs",
+  "contributors": [
+    "Coffee (Lumiverse Discord) — original creator of Luminote"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && bun build src/backend.ts --outfile=dist/backend.js --target=bun && bun build src/frontend.ts --outfile=dist/frontend.js --target=browser",
+    "typecheck": "tsc --noEmit",
+    "verify:release": "bun scripts/verify-release.ts",
+    "release:check": "bun run typecheck && bun run build && bun run verify:release"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-markdown": "^6.5.1",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/search": "^6.5.11",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.6",
+    "@lezer/highlight": "^1.2.3",
+    "dompurify": "^3.2.4",
+    "highlight.js": "^11.11.1",
+    "marked": "^15.0.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.2.0",
+    "lumiverse-spindle-types": "0.6.15",
+    "typescript": "^5.9.3"
+  }
+}

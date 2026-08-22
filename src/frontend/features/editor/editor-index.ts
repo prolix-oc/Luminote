@@ -640,7 +640,11 @@ export function createEditorFeature(
       if (parts) {
         const spans: HTMLElement[] = []
         if (parts.parents) {
-          spans.push(el('span', { class: 'lx-view-header-title-parent', text: `${parts.parents} / ` }))
+          const hidden = !store.get().settings.tree.showViewHeaderParent
+          spans.push(el('span', {
+            class: `lx-view-header-title-parent${hidden ? ' lx-hidden' : ''}`,
+            text: `${parts.parents} / `,
+          }))
         }
         // Respect the "Show file extension" tree setting (same rule as rows).
         const entry = store.get().entries.find((e) => e.id === active.entryId)
@@ -663,7 +667,10 @@ export function createEditorFeature(
     )
     if (!container) return
     const next = buildViewHeaderTitle(leaf)
-    if (container.textContent === next.map((n) => n.textContent).join('')) return
+    const signature = (nodes: Iterable<Element>): string => [...nodes]
+      .map((node) => `${node.className}\u0000${node.textContent ?? ''}`)
+      .join('\u0001')
+    if (signature(container.children) === signature(next)) return
     container.replaceChildren(...next)
   }
 
@@ -985,7 +992,7 @@ export function createEditorFeature(
       runtime.editor.applySettings(settings)
       runtime.hostEl.style.setProperty('--lx-editor-font-size', `${settings.editor.fontSize}px`)
     }
-    // "Show file extension" affects view-header titles — resync live.
+    // File-extension and parent-folder visibility affect pane headers.
     for (const leaf of allLeaves()) syncViewHeaderTitle(leaf)
   }))
 

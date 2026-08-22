@@ -64,6 +64,19 @@ export type OverlayWindowState = 'regular' | 'maximized' | 'minimized'
 /** Where the workspace shell lives: the floating overlay, or a host dock panel. */
 export type WorkspacePlacement = 'overlay' | 'dock'
 
+/** Stable ids for settings-drawer collapsible cards and their persisted state. */
+export const SETTINGS_CARD_SLUGS = [
+  'editor',
+  'widget',
+  'half-dock',
+  'overlay',
+  'settings-panel',
+  'sidebar',
+  'statusbar',
+  'vault',
+] as const
+export type SettingsCardSlug = (typeof SETTINGS_CARD_SLUGS)[number]
+
 export interface OverlayGeometry {
   x: number
   y: number
@@ -88,6 +101,8 @@ export interface LuminoteSettings {
     dockWidth: number
     /** Workspace shell placement: floating overlay window or host dock panel. */
     placement: WorkspacePlacement
+    /** Last expanded/collapsed state of every settings-drawer card. */
+    settingsCardsExpanded: Record<SettingsCardSlug, boolean>
     /** Settings-drawer banner — deliberately a single upload, no recents. */
     bannerUrl: string | null
     bannerImageId: string | null
@@ -107,6 +122,10 @@ export interface LuminoteSettings {
     overlayOpacity: number
     /** Vault Statistics block in the settings drawer body (name stays in the header). */
     showVaultRow: boolean
+    /** Profile avatar in the settings-drawer header. */
+    showSettingsAvatar: boolean
+    /** Vault avatar in the workspace vault bar. */
+    showVaultAvatar: boolean
     /** Nameplate image layered behind the workspace vault bar. */
     showNameplate: boolean
     /** Settings-drawer header avatar diameter (px). */
@@ -136,6 +155,8 @@ export interface LuminoteSettings {
     sortDir: SortDir
     /** Show the ".md" extension on file rows in the tree. */
     showExtension: boolean
+    /** Show the parent-folder breadcrumb in each pane's view header. */
+    showViewHeaderParent: boolean
     /** Topbar sort button shows the glyph or the current sort as words. */
     sortButtonStyle: 'icon' | 'text'
     /** Confirm before deleting notes/folders." */
@@ -164,6 +185,16 @@ export const DEFAULT_SETTINGS: LuminoteSettings = {
     sidebarCollapsed: false,
     dockWidth: 560,
     placement: 'overlay',
+    settingsCardsExpanded: {
+      editor: true,
+      widget: false,
+      'half-dock': false,
+      overlay: false,
+      'settings-panel': true,
+      sidebar: false,
+      statusbar: false,
+      vault: false,
+    },
     bannerUrl: null,
     bannerImageId: null,
     widgetIconUrl: null,
@@ -178,6 +209,8 @@ export const DEFAULT_SETTINGS: LuminoteSettings = {
     widgetSnapAnimMs: 220,
     overlayOpacity: 1,
     showVaultRow: true,
+    showSettingsAvatar: true,
+    showVaultAvatar: true,
     showNameplate: true,
     avatarSize: 56,
     avatarRadius: 50,
@@ -199,6 +232,7 @@ export const DEFAULT_SETTINGS: LuminoteSettings = {
     sortBy: 'custom',
     sortDir: 'asc',
     showExtension: true,
+    showViewHeaderParent: true,
     sortButtonStyle: 'icon',
     confirmDelete: true,
   },
@@ -270,18 +304,32 @@ export function normalizeSettings(saved: unknown): LuminoteSettings {
   merged.ui.overlayOpen = typeof merged.ui.overlayOpen === 'boolean' ? merged.ui.overlayOpen : null
   merged.ui.sidebarCollapsed = merged.ui.sidebarCollapsed === true
   if (merged.ui.placement !== 'overlay' && merged.ui.placement !== 'dock') merged.ui.placement = 'overlay'
+  const rawCardStates = isRecord(merged.ui.settingsCardsExpanded)
+    ? merged.ui.settingsCardsExpanded
+    : DEFAULT_SETTINGS.ui.settingsCardsExpanded
+  const normalizedCardStates = {} as Record<SettingsCardSlug, boolean>
+  for (const slug of SETTINGS_CARD_SLUGS) {
+    const value: unknown = rawCardStates[slug]
+    normalizedCardStates[slug] = typeof value === 'boolean'
+      ? value
+      : DEFAULT_SETTINGS.ui.settingsCardsExpanded[slug]
+  }
+  merged.ui.settingsCardsExpanded = normalizedCardStates
   merged.tree.showExtension = merged.tree.showExtension === true
+  merged.tree.showViewHeaderParent = merged.tree.showViewHeaderParent === true
   if (merged.tree.sortButtonStyle !== 'icon' && merged.tree.sortButtonStyle !== 'text') merged.tree.sortButtonStyle = 'icon'
   merged.tree.confirmDelete = merged.tree.confirmDelete === true
   merged.editor.autoPair = merged.editor.autoPair === true
 
-  merged.ui.widgetSize = clampNumber(merged.ui.widgetSize, 24, 64, DEFAULT_SETTINGS.ui.widgetSize)
+  merged.ui.widgetSize = clampNumber(merged.ui.widgetSize, 24, 256, DEFAULT_SETTINGS.ui.widgetSize)
   merged.ui.widgetOpacity = clampNumber(merged.ui.widgetOpacity, 0.4, 1, DEFAULT_SETTINGS.ui.widgetOpacity)
   merged.ui.widgetSnap = merged.ui.widgetSnap === true
   merged.ui.widgetSnapAnim = merged.ui.widgetSnapAnim === true
-  merged.ui.widgetSnapAnimMs = clampNumber(merged.ui.widgetSnapAnimMs, 0, 1000, DEFAULT_SETTINGS.ui.widgetSnapAnimMs)
+  merged.ui.widgetSnapAnimMs = clampNumber(merged.ui.widgetSnapAnimMs, 0, 900, DEFAULT_SETTINGS.ui.widgetSnapAnimMs)
   merged.ui.overlayOpacity = clampNumber(merged.ui.overlayOpacity, 0.35, 1, DEFAULT_SETTINGS.ui.overlayOpacity)
   merged.ui.showVaultRow = merged.ui.showVaultRow === true
+  merged.ui.showSettingsAvatar = merged.ui.showSettingsAvatar === true
+  merged.ui.showVaultAvatar = merged.ui.showVaultAvatar === true
   merged.ui.showNameplate = merged.ui.showNameplate === true
   merged.ui.widgetRadius = clampNumber(merged.ui.widgetRadius, 0, 50, DEFAULT_SETTINGS.ui.widgetRadius)
   merged.ui.avatarSize = clampNumber(merged.ui.avatarSize, 48, 72, DEFAULT_SETTINGS.ui.avatarSize)

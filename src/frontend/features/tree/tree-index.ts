@@ -941,7 +941,9 @@ export function createTreeFeature(
     const vault = activeVault()
     const ui = store.get().settings.ui
 
-    // The avatar and its decoration) rebuild only when their URL/MIME
+    pfpBtn.classList.toggle('lx-hidden', !ui.showVaultAvatar)
+
+    // The avatar and its decoration rebuild only when their URL/MIME
     // signature actually changes — an unconditional replaceChildren() here
     // would destroy and recreate the <video> element on every save/tree
     // refresh, restarting it from frame 0 (the "frozen avatar" symptom).

@@ -11,6 +11,7 @@
 import type { SpindleFrontendContext } from 'lumiverse-spindle-types'
 import {
   DEFAULT_SETTINGS,
+  normalizeSettings,
   type BootPayload,
   type LuminoteSettings,
   type OverlayGeometry,
@@ -128,9 +129,12 @@ export function setup(ctx: SpindleFrontendContext) {
   cleanups.push(rpc.onChanged((topic) => {
     if (topic !== 'settings') return
     void rpc.call<LuminoteSettings>('settings.get').then((remote) => {
-      if (sameSettings(remote, store.get().settings)) return
-      if (lastSentSettings && sameSettings(remote, lastSentSettings)) return
-      store.set({ settings: remote })
+      // Frontend normalization keeps hot frontend/backend rebuilds compatible
+      // when one side is briefly serving an older settings shape.
+      const normalized = normalizeSettings(remote)
+      if (sameSettings(normalized, store.get().settings)) return
+      if (lastSentSettings && sameSettings(normalized, lastSentSettings)) return
+      store.set({ settings: normalized })
     }).catch(() => undefined)
   }))
 
@@ -349,8 +353,11 @@ export function setup(ctx: SpindleFrontendContext) {
         } catch { /* fresh profile */ }
       }
 
+      // Normalize again on the frontend: during a staging hot rebuild the
+      // backend can briefly return the previous settings schema.
+      const bootSettings = normalizeSettings(boot.settings)
       store.set({
-        settings: boot.settings,
+        settings: bootSettings,
         vaults: boot.vaults,
         activeVaultId: boot.activeVaultId,
         permissions: boot.permissions,
@@ -396,8 +403,8 @@ export function setup(ctx: SpindleFrontendContext) {
       // default until the overlay has been toggled once. The permission gate
       // mirrors the active shell placement: dock panels need ui_panels, the
       // floating overlay needs app_manipulation.
-      const openOnLoad = boot.settings.ui.overlayOpen ?? boot.settings.ui.overlayOpenOnLoad
-      const bootPermission = boot.settings.ui.placement === 'dock'
+      const openOnLoad = bootSettings.ui.overlayOpen ?? bootSettings.ui.overlayOpenOnLoad
+      const bootPermission = bootSettings.ui.placement === 'dock'
         ? store.get().permissions.ui_panels
         : store.get().permissions.app_manipulation
       store.set({ overlayVisible: openOnLoad && bootPermission })

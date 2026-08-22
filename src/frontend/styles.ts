@@ -29,7 +29,7 @@ export const OVERLAY_CSS = `
   backdrop-filter: blur(6px) saturate(1.03);
   overflow: hidden;
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
   line-height: 1.45;
 }
 
@@ -195,7 +195,7 @@ export const OVERLAY_CSS = `
   flex: none;
   background: color-mix(in srgb, var(--lumiverse-bg) 90%, transparent);
   min-width: 180px;
-  max-width: 480px;
+  max-width: 290px;
 }
 
 /* The handle overlays the body instead of consuming layout width, so the
@@ -294,7 +294,6 @@ export const OVERLAY_CSS = `
   overflow-x: hidden;
   padding: 4px 8px 24px;
   border-right: 1px solid var(--lumiverse-primary-020);
-  scrollbar-width: thin;
 }
 
 .lx-tree-scroller.lx-tree-root-drop {
@@ -306,7 +305,7 @@ export const OVERLAY_CSS = `
 .lx-root-drop-hint {
   display: none;
   padding: 6px 10px;
-  font-size: 11px;
+  font-size: calc(11px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-accent, var(--lumiverse-primary));
   text-align: center;
 }
@@ -325,7 +324,7 @@ export const OVERLAY_CSS = `
 .lx-tree-empty {
   padding: 22px 14px;
   color: var(--lumiverse-text-dim);
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
   text-align: center;
   line-height: 1.5;
 }
@@ -397,7 +396,7 @@ export const OVERLAY_CSS = `
 }
 
 .lx-row-folder .lx-row-icon {
-  color: color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 75%, var(--lumiverse-text, #d7d7de));
+  color: color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 75%, var(--lumiverse-text));
 }
 
 .lx-row-label {
@@ -406,7 +405,7 @@ export const OVERLAY_CSS = `
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--lumiverse-font-scale, 1));
 }
 
 .lx-row-menu-btn {
@@ -452,7 +451,7 @@ export const OVERLAY_CSS = `
   border-radius: 5px;
   background: var(--lumiverse-fill);
   color: var(--lumiverse-text);
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--lumiverse-font-scale, 1));
   font-family: inherit;
   padding: 0 6px;
   outline: none;
@@ -559,8 +558,8 @@ export const OVERLAY_CSS = `
 }
 
 .lx-vault-settings-btn svg {
-  height: 25px;
-  width: 25px;
+  height: 20px;
+  width: 20px;
 }
 
 .lx-vault-name-input {
@@ -769,7 +768,7 @@ export const OVERLAY_CSS = `
 
 /* Drop-target highlight while dragging a tab over another. */
 .lx-tab-header.lx-tab-highlighted {
-  box-shadow: inset 2px 0 0 var(--lumiverse-primary, var(--lumiverse-accent, rgba(147, 112, 219, 0.9)));
+  box-shadow: inset 2px 0 0 var(--lumiverse-primary, var(--lumiverse-accent));
   background: var(--lumiverse-primary-010);
 }
 
@@ -893,7 +892,7 @@ display: flex;
   border-radius: 5px;
   background: transparent;
   color: var(--lumiverse-text-dim);
-  font-size: 11px;
+  font-size: calc(11px * var(--lumiverse-font-scale, 1));
   font-family: inherit;
   white-space: nowrap;
   cursor: pointer;
@@ -922,6 +921,7 @@ display: flex;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--lumiverse-primary-020);
   overflow: hidden;
 }
 
@@ -955,14 +955,16 @@ display: flex;
 
 .lx-pane-empty-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
 }
 
-/* ── Reading mode: chat-parity prose ──────────────────────────────── */
+/* ── Reading mode ──────────────────────────────── */
+/* Mirrors ISLAND_BASE_CSS (the shadow-DOM island sheet) so light-DOM
+   markup pieces render exactly like chat / islands. Keep in step. */
 
 .lx-markup-piece,
 .lx-html-island {
-  font-size: 13.5px;
+  font-size: calc(14px * var(--lumiverse-font-scale, 1));
   line-height: 1.65;
   color: var(--lumiverse-text);
   word-wrap: break-word;
@@ -988,102 +990,219 @@ display: flex;
 .lx-markup-piece h3,
 .lx-markup-piece h4,
 .lx-markup-piece h5,
-.lx-markup-piece h6 { margin: 0.7em 0 0.35em; line-height: 1.3; }
+.lx-markup-piece h6 { margin: 0.7em 0 0.35em; font-weight: 600; }
 
-.lx-markup-piece h1 { font-size: 1.5em; }
-.lx-markup-piece h2 { font-size: 1.3em; }
-.lx-markup-piece h3 { font-size: 1.15em; }
-.lx-markup-piece h4, .lx-markup-piece h5, .lx-markup-piece h6 { font-size: 1.02em; }
+.lx-markup-piece h1 { font-size: 1.35em; }
+.lx-markup-piece h2 { font-size: 1.2em; }
+.lx-markup-piece h3 { font-size: 1.1em; }
+.lx-markup-piece h4 { font-size: 1em; }
+.lx-markup-piece h5 { font-size: 0.95em; }
+.lx-markup-piece h6 { font-size: 0.9em; }
 
 .lx-markup-piece ul,
-.lx-markup-piece ol { margin: 0.4em 0; padding-left: 1.5em; }
-.lx-markup-piece li { margin: 0.15em 0; }
+.lx-markup-piece ol { padding-left: 1.4em; margin: 4px 0; list-style-position: outside; }
+.lx-markup-piece li { margin: 2px 0; }
+.lx-markup-piece ul li { list-style: disc; }
+.lx-markup-piece ol li { list-style: decimal; }
 
 .lx-markup-piece blockquote {
-  margin: 0.5em 0;
-  padding: 2px 0 2px 12px;
-  border-left: 3px solid color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 55%, transparent);
-  color: var(--lumiverse-text-muted);
+  border-left: 2px solid var(--lumiverse-primary-020);
+  padding: 6px 12px;
+  margin: 8px 0;
+  background: var(--lumiverse-primary-010);
+  border-radius: 0 var(--lcs-radius-xs) var(--lcs-radius-xs) 0;
+  color: var(--lumiverse-prose-blockquote);
+  font-style: italic;
 }
 
 .lx-markup-piece hr {
   border: none;
   border-top: 1px solid var(--lumiverse-border);
-  margin: 0.8em 0;
+  margin: 12px 0;
 }
 
 .lx-markup-piece code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.9em;
-  background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 8%, transparent);
-  padding: 0.1em 0.35em;
+  padding: 2px 6px;
   border-radius: 4px;
+  background: var(--lumiverse-fill-subtle);
+  border: 1px solid var(--lcs-glass-border);
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 0.88em;
+  color: var(--lumiverse-primary-text);
 }
 
 .lx-markup-piece a,
-.lx-markup-piece .lx-prose-link { color: var(--lumiverse-accent, var(--lumiverse-primary)); }
-
-.lx-prose-italic { color: var(--lumiverse-prose-italic, #a8b6ff); font-style: italic; }
-.lx-prose-bold { color: var(--lumiverse-prose-bold, #ffd28a); font-weight: 600; }
-.lx-prose-inline-emphasis { color: var(--lumiverse-prose-bold, #ffd28a); font-weight: 600; }
-.lx-prose-dialogue { color: var(--lumiverse-prose-dialogue, #9fe8c8); }
-
-.lx-prose-image { max-width: min(100%, 560px); border-radius: 8px; display: block; margin: 0.35em 0; }
-
-.lx-prose-table { border-collapse: collapse; margin: 0.5em 0; font-size: 0.94em; }
-.lx-prose-table-head, .lx-prose-table-cell {
-  border: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.12));
-  padding: 4px 10px;
+.lx-prose-link {
+  color: var(--lumiverse-prose-link, var(--lumiverse-primary-text));
+  text-decoration: none;
+  transition: color var(--lumiverse-transition-fast), text-decoration var(--lumiverse-transition-fast);
 }
-.lx-prose-table-head { font-weight: 600; }
+
+.lx-markup-piece a:hover,
+.lx-prose-link:hover {
+  text-decoration: underline;
+  filter: brightness(1.15);
+}
+
+.lx-prose-italic { color: var(--lumiverse-prose-italic); font-style: italic; }
+.lx-prose-bold { color: var(--lumiverse-prose-bold); font-weight: 600; }
+.lx-prose-inline-emphasis { color: var(--lumiverse-prose-bold); font-weight: 600; }
+.lx-prose-dialogue { color: var(--lumiverse-prose-dialogue); }
+
+.lx-prose-image-wrap {
+  display: inline-block;
+  margin: 8px 0;
+  max-width: var(--prose-image-max-width, 240px);
+  max-height: var(--prose-image-max-height, 240px);
+  overflow: hidden;
+  border-radius: var(--lcs-radius-sm);
+  border: 1px solid var(--lumiverse-border);
+  background: var(--lumiverse-fill-subtle);
+  cursor: pointer;
+  transition: border-color var(--lumiverse-transition-fast), box-shadow var(--lumiverse-transition-fast), transform var(--lumiverse-transition-fast);
+}
+
+.lx-prose-image-wrap:hover {
+  border-color: var(--lumiverse-primary-040);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  transform: scale(1.02);
+}
+
+.lx-prose-image,
+.lx-markup-piece img {
+  display: block;
+  max-width: 100%;
+  max-height: var(--prose-image-max-height, 240px);
+  object-fit: contain;
+  border-radius: var(--lcs-radius-sm);
+  cursor: pointer;
+}
+
+.lx-prose-table,
+.lx-markup-piece table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  border: 1px solid var(--lumiverse-border);
+  border-radius: var(--lcs-radius-xs);
+  overflow: hidden;
+}
+
+.lx-prose-table-head,
+.lx-markup-piece th {
+  font-weight: 600;
+  background: var(--lumiverse-primary-010);
+  border: 1px solid var(--lumiverse-border);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
+}
+
+.lx-prose-table-cell,
+.lx-markup-piece td {
+  padding: 8px 12px;
+  border: 1px solid var(--lumiverse-border);
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
+}
+
+.lx-prose-table-row:nth-child(even) td,
+.lx-markup-piece tr:nth-child(even) td {
+  background: var(--lumiverse-bg-dark);
+}
 
 .lx-code-block {
-  margin: 0.55em 0;
-  border: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.09));
-  border-radius: 8px;
+  position: relative;
+  margin: 10px 0;
+  border-radius: 10px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 4%, transparent);
+  background: var(--lumiverse-fill-strong);
+  border: 1px solid var(--lumiverse-border);
 }
 
 .lx-code-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-family: inherit;
-  color: var(--lumiverse-text-muted, rgba(215, 215, 222, 0.62));
-  border-bottom: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.09));
+  padding: 6px 14px;
+  background: var(--lumiverse-fill-subtle);
+  border-bottom: 1px solid var(--lumiverse-border);
+}
+
+.lx-code-lang {
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 0.72em;
+  font-weight: 500;
+  color: var(--lumiverse-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
 }
 
 .lx-code-copy {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: transparent;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
   border: none;
-  color: inherit;
-  font: inherit;
+  background: transparent;
+  color: var(--lumiverse-text-dim);
+  font-family: inherit;
+  font-size: 0.72em;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 120ms ease;
-  padding: 1px 5px;
-  border-radius: 4px;
+  transition: opacity 150ms ease, color 150ms ease, background 150ms ease;
 }
 
 .lx-code-block:hover .lx-code-copy { opacity: 1; }
-.lx-code-copy:hover { background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 10%, transparent); }
-.lx-code-copied { color: var(--lumiverse-prose-dialogue, #9fe8c8); }
+.lx-code-copy:hover {
+  color: var(--lumiverse-text);
+  background: var(--lumiverse-fill-subtle);
+}
+.lx-code-copied {
+  opacity: 1 !important;
+  color: var(--lumiverse-success) !important;
+}
 
 .lx-code-block pre {
   margin: 0;
-  padding: 8px 10px;
+  padding: 14px;
   overflow-x: auto;
-  font-size: 12.5px;
-  line-height: 1.55;
+  white-space: pre;
 }
 
-.lx-code-block pre code { background: transparent; padding: 0; }
+.lx-code-block pre code {
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Menlo", "Consolas", monospace;
+  font-size: 0.85em;
+  line-height: 1.6;
+  color: var(--lumiverse-text);
+  background: none;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  tab-size: 2;
+}
+
+.lx-markup-piece pre {
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--lumiverse-fill-strong);
+  border: 1px solid var(--lumiverse-border);
+  overflow-x: auto;
+  margin: 10px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.lx-markup-piece pre code {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 0.85em;
+  line-height: 1.6;
+  color: var(--lumiverse-text);
+  white-space: pre-wrap;
+}
 
 .lx-markup-piece details { margin: 0.35em 0; }
 .lx-markup-piece summary { cursor: pointer; font-weight: 600; }
@@ -1118,28 +1237,28 @@ display: flex;
   color: var(--lumiverse-text);
 }
 
-.lx-lp-em { color: var(--lumiverse-prose-italic, #a8b6ff); font-style: italic; }
-.lx-lp-strong { color: var(--lumiverse-prose-bold, #ffd28a); font-weight: 600; }
-.lx-lp-strike { text-decoration: line-through; color: var(--lumiverse-text-dim, rgba(215, 215, 222, 0.55)); }
+.lx-lp-em { color: var(--lumiverse-prose-italic); font-style: italic; }
+.lx-lp-strong { color: var(--lumiverse-prose-bold); font-weight: 600; }
+.lx-lp-strike { text-decoration: line-through; }
 
 .lx-lp-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.88em;
-  background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 8%, transparent);
+  background: color-mix(in srgb, var(--lumiverse-text) 8%, transparent);
   padding: 0.1em 0.3em;
   border-radius: 4px;
-  color: var(--lumiverse-prose-code, #f0a875);
+  color: var(--lumiverse-primary-text);
 }
 
 .lx-lp-fenced {
-  background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 4%, transparent);
+  background: color-mix(in srgb, var(--lumiverse-text) 4%, transparent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.92em;
   border-radius: 4px;
 }
 
-.lx-lp-quote { color: var(--lumiverse-text-muted, rgba(215, 215, 222, 0.68)); font-style: italic; }
-.lx-lp-url { color: var(--lumiverse-text-dim, rgba(215, 215, 222, 0.45)); font-size: 0.85em; }
+.lx-lp-quote { color: var(--lumiverse-text-muted); font-style: italic; }
+.lx-lp-url { color: var(--lumiverse-text-dim); font-size: 0.85em; }
 .lx-lp-link { color: var(--lumiverse-accent, var(--lumiverse-primary)); }
 /* The rule itself: transparent dashes on a normal-height line (so gutter
    and content never drift), with the divider painted inside the line box. */
@@ -1166,11 +1285,12 @@ display: flex;
   flex: none;
   padding: 0 16px;
   border-top: 1px solid var(--lumiverse-border);
-  background: color-mix(in srgb, var(--lumiverse-bg) 100%, transparent);
+  background: var(--lumiverse-bg);
   color: var(--lumiverse-text-dim);
-  font-size: 11px;
+  font-size: calc(11px * var(--lumiverse-font-scale, 1));
   user-select: none;
   -webkit-user-select: none;
+  z-index: 2;
 }
 
 .lx-status-save {
@@ -1273,6 +1393,22 @@ islands appear similar to Lumiverse's native chat. */
   font-style: italic;
 }
 
+.lx-live-svg {
+  display: block;
+  position: relative;
+}
+
+.lx-live-svg-frame svg {
+  max-width: 100%;
+  max-height: 420px;
+}
+
+.lx-live-svg-frame svg:not([width]) {
+  width: min(420px, 100%);
+  display: block;
+  margin: 0 auto;
+}
+
 .lx-save-saving .lx-icon,
 .lx-save-saving svg {
   animation: lx-spin 1s linear infinite;
@@ -1368,10 +1504,10 @@ islands appear similar to Lumiverse's native chat. */
   z-index: 40;
   padding: 7px 13px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--lumiverse-fill, #141419) 88%, var(--lumiverse-accent, var(--lumiverse-primary)));
+  background: color-mix(in srgb, var(--lumiverse-fill) 88%, var(--lumiverse-accent, var(--lumiverse-primary)));
   border: 1px solid color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 40%, transparent);
   color: var(--lumiverse-text);
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
   animation: lx-toast-in 160ms ease;
   max-width: 82%;
@@ -1399,9 +1535,9 @@ islands appear similar to Lumiverse's native chat. */
   width: 100%;
   height: 100%;
   padding: 0;
-  border: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.12));
-  background: color-mix(in srgb, var(--lumiverse-fill, #141419) 82%, transparent);
-  color: var(--lumiverse-text, #fff);
+  border: 1px solid var(--lumiverse-border);
+  background: color-mix(in srgb, var(--lumiverse-fill) 82%, transparent);
+  color: var(--lumiverse-text);
   cursor: pointer;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
   transition: all var(--lumiverse-transition-fast, 140ms) ease;
@@ -1432,7 +1568,7 @@ islands appear similar to Lumiverse's native chat. */
   gap: 18px;
   padding: 4px 2px;
   color: var(--lumiverse-text);
-  font-size: 13px;
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
 }
 
 .lx-settings-title {
@@ -1443,13 +1579,13 @@ islands appear similar to Lumiverse's native chat. */
 }
 
 .lx-settings-name {
-  font-size: 15px;
+  font-size: calc(15px * var(--lumiverse-font-scale, 1));
   font-weight: 700;
   color: var(--lumiverse-text);
 }
 
 .lx-settings-sub {
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-text-dim);
 }
 
@@ -1463,7 +1599,7 @@ islands appear similar to Lumiverse's native chat. */
 
 .lx-settings-heading {
   margin: 0 0 6px;
-  font-size: 11px;
+  font-size: calc(11px * var(--lumiverse-font-scale, 1));
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -1630,7 +1766,7 @@ islands appear similar to Lumiverse's native chat. */
   flex: none;
   padding: 0 10px 0 0;
   width: 42px;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--lumiverse-font-scale, 1));
   font-weight: 600;
   color: var(--lumiverse-text-muted);
 }
@@ -1639,18 +1775,18 @@ islands appear similar to Lumiverse's native chat. */
   flex: none;
   padding: 0 0 0 10px;
   min-width: 42px;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-text-dim);
   font-variant-numeric: tabular-nums;
 }
 
 /* select */
 .lx-select {
-  background: var(--lumiverse-fill, #141419);
+  background: var(--lumiverse-fill);
   color: var(--lumiverse-text);
   border: 1px solid var(--lumiverse-border);
   border-radius: 7px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--lumiverse-font-scale, 1));
   padding: 4px 8px;
   outline: none;
 }
@@ -1659,33 +1795,9 @@ islands appear similar to Lumiverse's native chat. */
   border-color: color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 60%, transparent);
 }
 
-/* permissions */
-.lx-perm-side {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-}
-
-.lx-perm-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-}
-
-.lx-perm-ok { color: var(--lumiverse-prose-dialogue); }
-.lx-perm-missing { color: #e5b567; }
-
-.lx-perm-btn {
-  padding: 4px 10px;
-  width: auto;
-  height: auto;
-}
-
 .lx-settings-note {
   margin: 2px 0 4px;
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
   line-height: 1.55;
   color: var(--lumiverse-text-dim);
 }
@@ -1707,13 +1819,13 @@ islands appear similar to Lumiverse's native chat. */
 
 .lx-stats-label {
   color: var(--lumiverse-text-muted);
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--lumiverse-font-scale, 1));
 }
 
 .lx-stats-note {
   margin: 0;
   padding-top: 6px;
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-text-dim);
   border-top: 1px solid var(--lumiverse-border);
 }
@@ -1728,7 +1840,7 @@ islands appear similar to Lumiverse's native chat. */
   background: var(--lumiverse-fill);
   color: var(--lumiverse-text);
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
   outline: none;
 }
 
@@ -1742,7 +1854,7 @@ islands appear similar to Lumiverse's native chat. */
 
 .lx-modal-hint {
   margin: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-text-muted);
 }
 
@@ -1758,7 +1870,7 @@ islands appear similar to Lumiverse's native chat. */
   background: var(--lumiverse-accent, var(--lumiverse-primary));
   color: var(--lumiverse-accent-fg);
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
   font-weight: 600;
   cursor: pointer;
   transition: filter 120ms ease;
@@ -1779,7 +1891,7 @@ islands appear similar to Lumiverse's native chat. */
   background: var(--lumiverse-fill);
   border: 1px solid color-mix(in srgb, #e5b567 55%, transparent);
   color: var(--lumiverse-text);
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--lumiverse-font-scale, 1));
   line-height: 1.5;
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
 }
@@ -1830,7 +1942,7 @@ islands appear similar to Lumiverse's native chat. */
 }
 
 .lx-sort-label {
-  font-size: 11px;
+  font-size: calc(11px * var(--lumiverse-font-scale, 1));
   font-weight: 500;
   line-height: 1;
   color: var(--lumiverse-text-muted);
@@ -1845,13 +1957,6 @@ islands appear similar to Lumiverse's native chat. */
 }
 
 /* ── Dock shell (workspace mounted in a host dock panel) ───────────── */
-/* The host SpindleDockPanel owns outer chrome, edge pinning, collapse
-   chevron, and the native edge resize handle.
-   The shell frames the shared regions (body + statusbar). */
-
-/* The host renders the extension root (a bare div) inside SpindleDockPanel's
-   scrollable content flex item. Anchor the root to the content area's
-   definite height so the shell fills it and the editor scrolls internally. */
 .luminote-dock-root {
   position: relative;
   height: 100%;
@@ -1872,7 +1977,7 @@ islands appear similar to Lumiverse's native chat. */
   color: var(--lumiverse-text);
   overflow: hidden;
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
   line-height: 1.45;
   contain: layout;
   will-change: width;
@@ -1888,7 +1993,7 @@ islands appear similar to Lumiverse's native chat. */
   color: var(--lumiverse-text);
   overflow: hidden;
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--lumiverse-font-scale, 1));
   line-height: 1.45;
 }
 
@@ -2222,7 +2327,7 @@ islands appear similar to Lumiverse's native chat. */
 .lx-vaultname-label {
   position: relative;
   display: block;
-  font-size: 11px;
+  font-size: calc(11px * var(--lumiverse-font-scale, 1));
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2319,20 +2424,17 @@ islands appear similar to Lumiverse's native chat. */
 }
 
 .lx-vaultstat-label {
-  font-size: 9px;
+  font-size: calc(9px * var(--lumiverse-font-scale, 1));
   font-weight: 500;
   letter-spacing: 0.06em;
   color: var(--lumiverse-text-dim);
 }
 
 .lx-vaultstat-value {
-  font-size: 11px;
+  font-size: calc(11px * var(--lumiverse-font-scale, 1));
   font-weight: 500;
 }
 
-/* Avatar and widget controls now live inside their owning collapsible cards.
-   The widget section retains its art previews; avatar art is changed from the
-   profile avatar's context menu instead of duplicate customization tiles. */
 .lx-setting-widget-customization {
   display: flex;
   flex-direction: column;
@@ -2443,10 +2545,6 @@ islands appear similar to Lumiverse's native chat. */
   display: contents;
 }
 
-/* The collapsible chrome is host-rendered (its own classes are CSS-module
-   hashes), so the feature tags every piece: the section root gets
-   lx-setting-section(-{slug}) via the host's className option, and the
-   header button + content wrapper are tagged post-mount. */
 .lx-setting-section-header {
   padding: 10px 12px;
 }
@@ -2512,12 +2610,12 @@ islands appear similar to Lumiverse's native chat. */
 }
 
 .lx-lm-select-title {
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--lumiverse-font-scale, 1));
   font-weight: 700;
 }
 
 .lx-lm-select-desc {
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-text-dim);
 }
 
@@ -2529,12 +2627,15 @@ islands appear similar to Lumiverse's native chat. */
 }
 
 .lx-lm-error {
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-error);
 }
 
 /* Crop stage (avatar slots) — vanilla mirror of the host's avatar resizer:
-   circle spotlight mask + cover-scaled, pannable preview + zoom slider. */
+   circle spotlight mask + cover-scaled, pannable preview + zoom slider.
+   Extensions: darkened outside-window mask + rule-of-thirds grid for rect
+   crops, a rotate/flip/reset toolbar, and a height-capped square stage so
+   the picker modal never scrolls. */
 .lx-crop {
   display: flex;
   flex-direction: column;
@@ -2543,7 +2644,8 @@ islands appear similar to Lumiverse's native chat. */
 
 .lx-crop-stage {
   position: relative;
-  width: 100%;
+  width: min(100%, 320px);
+  margin: 0 auto;
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 12px;
@@ -2553,32 +2655,96 @@ islands appear similar to Lumiverse's native chat. */
   user-select: none;
 }
 
+/* Wide stages (banner) are taller than the crop window so the darkened
+   "outside the window" area is visible above/below the 17:6 crop. */
+.lx-crop-stage.lx-crop-stage-wide {
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+}
+
 .lx-crop-stage.lx-crop-dragging {
   cursor: grabbing;
 }
 
-.lx-crop-img {
+.lx-crop-media {
   position: absolute;
   max-width: none;
   pointer-events: none;
   user-select: none;
 }
 
+/* The crop window (mask) is centered and sized in JS to stay CONTAINED within
+   the contain-fitted media */
 .lx-crop-mask {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border: 5px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+}
+
+.lx-crop-mask-round {
+  border-radius: 50%;
+}
+
+/* Rule-of-thirds gridlines, rect crops only (the round avatar mask stays a
+   clean circle). */
+.lx-crop-mask-rect::before,
+.lx-crop-mask-rect::after {
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.lx-crop-mask-round {
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--lumiverse-accent) 70%, transparent);
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+.lx-crop-mask-rect::before {
+  background: linear-gradient(
+    to right,
+    transparent 33.2%, rgba(255, 255, 255, 0.35) 33.2%, rgba(255, 255, 255, 0.35) 33.8%,
+    transparent 33.8%, transparent 66.2%,
+    rgba(255, 255, 255, 0.35) 66.2%, rgba(255, 255, 255, 0.35) 66.8%, transparent 66.8%
+  );
 }
 
-.lx-crop-controls {
+.lx-crop-mask-rect::after {
+  background: linear-gradient(
+    to bottom,
+    transparent 33.2%, rgba(255, 255, 255, 0.35) 33.2%, rgba(255, 255, 255, 0.35) 33.8%,
+    transparent 33.8%, transparent 66.2%,
+    rgba(255, 255, 255, 0.35) 66.2%, rgba(255, 255, 255, 0.35) 66.8%, transparent 66.8%
+  );
+}
+
+.lx-crop-toolbar {
   display: flex;
   align-items: center;
+  gap: 2px;
+}
+
+.lx-crop-tool {
+  width: 28px;
+  height: 28px;
+}
+
+.lx-crop-reset {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--lumiverse-radius, 8px);
+  background: transparent;
+  color: var(--lumiverse-text-muted);
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--lumiverse-transition-fast, 120ms) ease, color var(--lumiverse-transition-fast, 120ms) ease;
+}
+
+.lx-crop-reset:hover {
+  background: var(--lumiverse-fill-subtle);
+  color: var(--lumiverse-text);
 }
 
 .lx-crop-zoom-label {
@@ -2586,8 +2752,6 @@ islands appear similar to Lumiverse's native chat. */
   align-items: center;
   gap: 10px;
   flex: 1;
-  font-size: 11.5px;
-  font-weight: 600;
   color: var(--lumiverse-text-muted);
 }
 
@@ -2604,13 +2768,13 @@ islands appear similar to Lumiverse's native chat. */
 
 .lx-lm-recents-header h2 {
   margin: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--lumiverse-font-scale, 1));
   font-weight: 700;
 }
 
 .lx-lm-recents-header p {
   margin: 2px 0 8px;
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--lumiverse-font-scale, 1));
   color: var(--lumiverse-text-dim);
 }
 
@@ -2620,7 +2784,16 @@ islands appear similar to Lumiverse's native chat. */
   gap: 8px;
 }
 
+/* The wrap is only a positioning context for the trash overlay — the button
+   itself carries the square aspect-ratio so the wrap's height is always
+   definite (a percentage-height button inside an aspect-ratio wrapper can
+   collapse to zero when no placeholder slot establishes the row height). */
+.lx-lm-slot-wrap {
+  position: relative;
+}
+
 .lx-lm-slot-btn {
+  width: 100%;
   aspect-ratio: 1;
   padding: 0;
   border: 1px solid var(--lumiverse-border);
@@ -2628,6 +2801,36 @@ islands appear similar to Lumiverse's native chat. */
   overflow: hidden;
   background: transparent;
   cursor: pointer;
+}
+
+/* Per-recent trash affordance (Discord-style, hover-revealed). */
+.lx-lm-slot-trash {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--lumiverse-radius-sm);
+  background: var(--lumiverse-fill-subtle);
+  color: var(--lumiverse-text-muted);
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.lx-lm-slot-wrap:hover .lx-lm-slot-trash,
+.lx-lm-slot-trash:focus-visible {
+  opacity: 1;
+}
+
+.lx-lm-slot-trash:hover {
+  color: var(--lumiverse-error);
 }
 
 .lx-lm-slot-btn:hover:not(:disabled) {
@@ -2691,165 +2894,384 @@ export const ISLAND_BASE_CSS = `
     display: flow-root;
     position: relative;
     max-width: 100%;
-    font-size: 13.5px;
+    font-size: calc(14px * var(--lumiverse-font-scale, 1));
     line-height: 1.65;
-    color: var(--lumiverse-text, #d7d7de);
+    color: var(--lumiverse-text);
     word-wrap: break-word;
     overflow-wrap: break-word;
-    /* Inherited properties cross shadow boundaries, and chat can rely on the
-       message DOM's defaults — but the live editor wraps contentDOM in
-       .cm-lineWrapping (white-space: break-spaces, word-break: break-word)
-       and a monospace .cm-content font. Without these pins, live islands
-       inherit all three: source newlines render as real line breaks and the
-       island wraps differently from reading mode / chat. */
+    /* Luminote addition (not in upstream's base sheet): the live editor wraps
+       islands in CodeMirror's .cm-content — monospace, white-space:
+       break-spaces, word-break: break-word. Those are inherited, so without
+       these pins live islands inherit all three and render differently from
+       reading mode and chat. */
     white-space: normal;
     word-break: normal;
     font-family: var(--lumiverse-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif);
   }
 
-  *, *::before, *::after { box-sizing: border-box; }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-  q { quotes: none; }
-  q::before, q::after { content: none; }
+  q {
+    quotes: none;
+  }
 
-  p { margin: 0 0 0.5em; }
-  p:last-child { margin-bottom: 0; }
+  q::before,
+  q::after {
+    content: none;
+  }
 
-  em, .lx-prose-italic {
-    color: var(--lumiverse-prose-italic, #a8b6ff);
+  p {
+    margin: 0 0 0.5em;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  em,
+  .lx-prose-italic {
+    color: var(--lumiverse-prose-italic);
     font-style: italic;
   }
 
-  strong, .lx-prose-bold {
+  strong,
+  .lx-prose-bold {
     font-weight: 600;
-    color: var(--lumiverse-prose-bold, #ffd28a);
+    color: var(--lumiverse-prose-bold);
   }
 
   .lx-prose-inline-emphasis {
     font-weight: 600;
-    color: var(--lumiverse-prose-bold, #ffd28a);
+    color: var(--lumiverse-prose-bold);
   }
 
-  .lx-prose-dialogue { color: var(--lumiverse-prose-dialogue, #9fe8c8); }
+  .lx-prose-dialogue {
+    color: var(--lumiverse-prose-dialogue);
+  }
 
-  a, .lx-prose-link { color: var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff)); }
+  span[style*="color"] .lx-prose-dialogue,
+  span[style*="color"] em,
+  span[style*="color"] .lx-prose-italic,
+  span[style*="color"] strong,
+  span[style*="color"] .lx-prose-bold,
+  span[style*="color"] .lx-prose-inline-emphasis,
+  font .lx-prose-dialogue,
+  font em,
+  font .lx-prose-italic,
+  font strong,
+  font .lx-prose-bold,
+  font .lx-prose-inline-emphasis {
+    color: inherit;
+  }
+
+  .lx-prose-dialogue em,
+  .lx-prose-dialogue .lx-prose-italic,
+  .lx-prose-dialogue strong,
+  .lx-prose-dialogue .lx-prose-bold,
+  .lx-prose-dialogue .lx-prose-inline-emphasis {
+    color: inherit;
+  }
 
   code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.9em;
-    background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 8%, transparent);
-    padding: 0.1em 0.35em;
+    padding: 2px 6px;
     border-radius: 4px;
+    background: var(--lumiverse-fill-subtle);
+    border: 1px solid var(--lcs-glass-border);
+    font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Menlo", "Consolas", monospace;
+    font-size: 0.88em;
+    color: var(--lumiverse-primary-text);
   }
 
   .lx-code-block {
-    margin: 0.55em 0;
-    border: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.09));
-    border-radius: 8px;
+    position: relative;
+    margin: 10px 0;
+    border-radius: 10px;
     overflow: hidden;
-    background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 4%, transparent);
+    background: var(--lumiverse-fill-strong);
+    border: 1px solid var(--lumiverse-border);
   }
 
   .lx-code-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 8px;
-    font-size: 11px;
-    color: var(--lumiverse-text-muted, rgba(215, 215, 222, 0.62));
-    border-bottom: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.09));
+    padding: 6px 14px;
+    background: var(--lumiverse-fill-subtle);
+    border-bottom: 1px solid var(--lumiverse-border);
+  }
+
+  .lx-code-lang {
+    font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Menlo", "Consolas", monospace;
+    font-size: 0.72em;
+    font-weight: 500;
+    color: var(--lumiverse-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    user-select: none;
   }
 
   .lx-code-copy {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: transparent;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
     border: none;
-    color: inherit;
-    font: inherit;
+    background: transparent;
+    color: var(--lumiverse-text-dim);
+    font-family: inherit;
+    font-size: 0.72em;
     cursor: pointer;
     opacity: 0;
-    transition: opacity 120ms ease;
-    padding: 1px 4px;
-    border-radius: 4px;
+    transition: opacity 150ms ease, color 150ms ease, background 150ms ease;
   }
 
-  .lx-code-block:hover .lx-code-copy { opacity: 1; }
-  .lx-code-copy:hover { background: color-mix(in srgb, var(--lumiverse-text, #d7d7de) 10%, transparent); }
+  .lx-code-block:hover .lx-code-copy {
+    opacity: 1;
+  }
+
+  .lx-code-copy:hover {
+    color: var(--lumiverse-text);
+    background: var(--lumiverse-fill-subtle);
+  }
+
+  .lx-code-copied {
+    opacity: 1 !important;
+    color: var(--lumiverse-success) !important;
+  }
 
   .lx-code-block pre {
     margin: 0;
-    padding: 8px 10px;
+    padding: 14px;
     overflow-x: auto;
-    font-size: 12.5px;
-    line-height: 1.55;
+    white-space: pre;
   }
 
-  .lx-code-block pre code { background: transparent; padding: 0; }
+  .lx-code-block pre code {
+    font-family: "SF Mono", "Fira Code", "JetBrains Mono", "Menlo", "Consolas", monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+    color: var(--lumiverse-text);
+    background: none;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    tab-size: 2;
+  }
+
+  pre {
+    padding: 14px;
+    border-radius: 10px;
+    background: var(--lumiverse-fill-strong);
+    border: 1px solid var(--lumiverse-border);
+    overflow-x: auto;
+    margin: 10px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  pre code {
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 0.85em;
+    line-height: 1.6;
+    color: var(--lumiverse-text);
+    white-space: pre-wrap;
+  }
 
   blockquote {
-    margin: 0.5em 0;
-    padding: 2px 0 2px 12px;
-    border-left: 3px solid color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff)) 55%, transparent);
-    color: var(--lumiverse-text-muted, rgba(215, 215, 222, 0.72));
+    border-left: 2px solid var(--lumiverse-primary-020);
+    padding-left: 12px;
+    margin: 8px 0;
+    background: var(--lumiverse-primary-010);
+    border-radius: 0 var(--lcs-radius-xs) var(--lcs-radius-xs) 0;
+    padding: 6px 12px;
+    color: var(--lumiverse-prose-blockquote);
+    font-style: italic;
   }
 
-  h1, h2, h3, h4, h5, h6 { margin: 0.7em 0 0.35em; line-height: 1.3; }
-  h1 { font-size: 1.5em; } h2 { font-size: 1.3em; } h3 { font-size: 1.15em; }
-  h4, h5, h6 { font-size: 1.02em; }
+  h1 { font-size: 1.35em; font-weight: 600; margin: 0.7em 0 0.35em; }
+  h2 { font-size: 1.2em; font-weight: 600; margin: 0.7em 0 0.35em; }
+  h3 { font-size: 1.1em; font-weight: 600; margin: 0.7em 0 0.35em; }
+  h4 { font-size: 1em; font-weight: 600; margin: 0.7em 0 0.35em; }
+  h5 { font-size: 0.95em; font-weight: 600; margin: 0.7em 0 0.35em; }
+  h6 { font-size: 0.9em; font-weight: 600; margin: 0.7em 0 0.35em; }
 
-  ul, ol { margin: 0.4em 0; padding-left: 1.5em; }
-  li { margin: 0.15em 0; }
-
-  table.lx-prose-table { border-collapse: collapse; margin: 0.5em 0; font-size: 0.94em; }
-  .lx-prose-table-head, .lx-prose-table-cell {
-    border: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.12));
-    padding: 4px 10px;
+  hr {
+    border: none;
+    border-top: 1px solid var(--lumiverse-border);
+    margin: 12px 0;
   }
-  .lx-prose-table-head { font-weight: 600; }
 
-  hr { border: none; border-top: 1px solid var(--lumiverse-border, rgba(255, 255, 255, 0.12)); margin: 0.8em 0; }
+  ul,
+  ol {
+    padding-left: 1.4em;
+    margin: 4px 0;
+    list-style-position: outside;
+  }
 
-  img.lx-prose-image { max-width: min(100%, 560px); border-radius: 8px; display: block; margin: 0.35em 0; }
+  li {
+    margin: 2px 0;
+  }
 
-  img, svg, video, audio { max-width: 100%; }
+  ul li {
+    list-style: disc;
+  }
 
-  details { margin: 0.35em 0; }
-  summary { cursor: pointer; font-weight: 600; }
+  ol li {
+    list-style: decimal;
+  }
 
-  /* Shadow-DOM islands see no host styles — most importantly the host app's
-     scrollbar skinning does not inherit — so the base sheet carries chat's
-     own scrollbar (MessageList: 5px, transparent track, border-tinted thumb)
-     as the fallback for content the island author didn't style. Class-scoped
-     author rules (e.g. .page::-webkit-scrollbar) always outrank this. */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--lumiverse-border, rgba(255, 255, 255, 0.12)) 55%, transparent);
+  a,
+  .lx-prose-link {
+    color: var(--lumiverse-prose-link, var(--lumiverse-primary-text));
+    text-decoration: none;
+    transition: color var(--lumiverse-transition-fast), text-decoration var(--lumiverse-transition-fast);
+  }
+
+  a:hover,
+  .lx-prose-link:hover {
+    text-decoration: underline;
+    filter: brightness(1.15);
+  }
+
+  .lx-prose-image-wrap {
+    display: inline-block;
+    margin: 8px 0;
+    max-width: var(--prose-image-max-width, 240px);
+    max-height: var(--prose-image-max-height, 240px);
+    overflow: hidden;
+    border-radius: var(--lcs-radius-sm);
+    var(--lumiverse-primary)
+    background: var(--lumiverse-fill-subtle, rgba(255, 255, 255, 0.04));
+    cursor: pointer;
+    transition: border-color var(--lumiverse-transition-fast), box-shadow var(--lumiverse-transition-fast), transform var(--lumiverse-transition-fast);
+  }
+
+  .lx-prose-image-wrap:hover {
+    border-color: var(--lumiverse-primary-040, rgba(140, 130, 255, 0.4));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    transform: scale(1.02);
+  }
+
+  .lx-prose-image,
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: var(--prose-image-max-height, 240px);
+    object-fit: contain;
+    border-radius: var(--lcs-radius-sm);
+    cursor: pointer;
+  }
+
+  .lx-prose-table,
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    border: 1px solid var(--lumiverse-border);
+    border-radius: var(--lcs-radius-xs);
+    overflow: hidden;
+  }
+
+  .lx-prose-table-head,
+  th {
+    font-weight: 600;
+    background: var(--lumiverse-primary-010);
+    border: 1px solid var(--lumiverse-border);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: calc(13px * var(--lumiverse-font-scale, 1));
+  }
+
+  .lx-prose-table-cell,
+  td {
+    padding: 8px 12px;
+    border: 1px solid var(--lumiverse-border);
+    font-size: calc(13px * var(--lumiverse-font-scale, 1));
+  }
+
+  .lx-prose-table-row:nth-child(even) td,
+  tr:nth-child(even) td {
+    background: var(--lumiverse-bg-dark);
+  }
+
+  video,
+  audio {
+    max-width: 100%;
+    border-radius: var(--lcs-radius-sm);
+    margin: 8px 0;
+  }
+
+  iframe {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: var(--lcs-radius-sm);
+    border: 1px solid var(--lumiverse-border);
+    margin: 8px 0;
+  }
+
+  .spindle-message-tag-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    padding: 7px 10px;
+    border: 1px solid color-mix(in srgb, var(--lumiverse-primary) 22%, var(--lumiverse-border));
     border-radius: 999px;
+    background: color-mix(in srgb, var(--lumiverse-primary) 8%, transparent);
+    color: var(--lumiverse-text-muted);
+    font-size: calc(12px * var(--lumiverse-font-scale, 1));
+    line-height: 1.2;
+    letter-spacing: 0.01em;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in srgb, var(--lumiverse-text-muted, rgba(215, 215, 222, 0.7)) 65%, transparent);
+
+  .spindle-message-tag-pending-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--lumiverse-primary);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--lumiverse-primary, #8c82ff) 45%, transparent);
+    animation: spindle-message-tag-pending-pulse 1.25s ease-in-out infinite;
+  }
+
+  @keyframes spindle-message-tag-pending-pulse {
+    0%,
+    100% {
+      opacity: 0.45;
+      transform: scale(0.9);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--lumiverse-primary, #8c82ff) 30%, transparent);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 5px transparent;
+    }
   }
 `
 
 // ── Syntax colors (theme-driven via Lumiverse CSS vars) ─────────────────
 
 export const lumiverseHighlight = HighlightStyle.define([
-  { tag: tags.heading, color: 'var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff))', fontWeight: '700' },
-  { tag: tags.emphasis, color: 'var(--lumiverse-prose-italic, #a8b6ff)', fontStyle: 'italic' },
-  { tag: tags.strong, color: 'var(--lumiverse-prose-bold, #ffd28a)', fontWeight: '600' },
-  { tag: tags.strikethrough, textDecoration: 'line-through', color: 'var(--lumiverse-text-dim, rgba(215,215,222,0.55))' },
-  { tag: tags.monospace, color: 'var(--lumiverse-prose-code, #f0a875)' },
-  { tag: [tags.link, tags.url], color: 'var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff))', textDecoration: 'underline 1px color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff)) 50%, transparent)' },
-  { tag: tags.quote, color: 'var(--lumiverse-text-muted, rgba(215,215,222,0.7))' },
-  { tag: [tags.comment, tags.meta, tags.processingInstruction], color: 'var(--lumiverse-text-dim, rgba(215,215,222,0.5))' },
-  { tag: [tags.tagName, tags.keyword], color: 'var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff))' },
-  { tag: tags.attributeName, color: 'var(--lumiverse-prose-bold, #ffd28a)' },
-  { tag: [tags.attributeValue, tags.string], color: 'var(--lumiverse-prose-dialogue, #9fe8c8)' },
-  { tag: [tags.number, tags.bool, tags.atom], color: 'var(--lumiverse-prose-code, #f0a875)' },
-  { tag: tags.propertyName, color: 'var(--lumiverse-prose-italic, #a8b6ff)' },
+  { tag: tags.heading, color: 'var(--lumiverse-text)', fontWeight: '700' },
+  { tag: tags.emphasis, color: 'var(--lumiverse-prose-italic)', fontStyle: 'italic' },
+  { tag: tags.strong, color: 'var(--lumiverse-prose-bold)', fontWeight: '600' },
+  { tag: tags.strikethrough, textDecoration: 'line-through', color: 'var(--lumiverse-text)' },
+  { tag: tags.monospace, color: 'var(--lumiverse-primary-text)' },
+  { tag: [tags.link, tags.url], color: 'var(--lumiverse-accent, var(--lumiverse-primary))', textDecoration: 'underline 1px color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 50%, transparent)' },
+  { tag: tags.quote, color: 'var(--lumiverse-text-muted)' },
+  { tag: [tags.comment, tags.meta, tags.processingInstruction], color: 'var(--lumiverse-text-dim)' },
+  { tag: [tags.tagName, tags.keyword], color: 'var(--lumiverse-accent, var(--lumiverse-primary))' },
+  { tag: tags.attributeName, color: 'var(--lumiverse-prose-bold)' },
+  { tag: [tags.attributeValue, tags.string], color: 'var(--lumiverse-prose-dialogue)' },
+  { tag: [tags.number, tags.bool, tags.atom], color: 'var(--lumiverse-primary-text)' },
+  { tag: tags.propertyName, color: 'var(--lumiverse-prose-italic)' },
 ])
 
 export const editorTheme = EditorView.theme({
@@ -2857,37 +3279,37 @@ export const editorTheme = EditorView.theme({
     height: '100%',
     fontSize: 'var(--lx-editor-font-size, 14px)',
     backgroundColor: 'transparent',
-    color: 'var(--lumiverse-text, #d7d7de)',
+    color: 'var(--lumiverse-text)',
   },
   '.cm-content': {
     padding: '10px 14px 30vh',
-    caretColor: 'var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff))',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
     lineHeight: '1.65',
   },
   '&.cm-focused': { outline: 'none' },
   '.cm-scroller': {
+	scrollbarWidth: 'none',
     fontFamily: 'inherit',
     overflow: 'auto',
   },
   '.cm-gutters': {
     backgroundColor: 'transparent',
     border: 'none',
-    color: 'var(--lumiverse-text-dim, rgba(215,215,222,0.4))',
+    color: 'var(--lumiverse-text-dim)',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
   '.cm-activeLine': {
-    backgroundColor: 'color-mix(in srgb, var(--lumiverse-text, #d7d7de) 4%, transparent)',
+    backgroundColor: 'var(--lumiverse-fill-subtle)',
   },
   '.cm-activeLineGutter': {
     backgroundColor: 'transparent',
-    color: 'var(--lumiverse-text-muted, rgba(215,215,222,0.7))',
+    color: 'var(--lumiverse-text-muted)',
   },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-    backgroundColor: 'color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff)) 26%, transparent)',
+    backgroundColor: 'color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 26%, transparent)',
   },
   '.cm-selectionMatch': {
-    backgroundColor: 'color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff)) 18%, transparent)',
+    backgroundColor: 'color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 18%, transparent)',
   },
   '.cm-searchMatch': {
     backgroundColor: 'color-mix(in srgb, #e5b567 35%, transparent)',
@@ -2897,22 +3319,56 @@ export const editorTheme = EditorView.theme({
     backgroundColor: 'color-mix(in srgb, #e5b567 55%, transparent)',
   },
   '.cm-panels': {
-    backgroundColor: 'var(--lumiverse-fill, #17171c)',
-    color: 'var(--lumiverse-text, #d7d7de)',
-    borderBottom: '1px solid var(--lumiverse-border, rgba(255,255,255,0.09))',
+    backgroundColor: 'var(--lumiverse-fill)',
+    color: 'var(--lumiverse-text)',
+    borderBottom: '1px solid var(--lumiverse-border)',
   },
   '.cm-panels input, .cm-panels button': {
-    backgroundColor: 'var(--lumiverse-fill-subtle, rgba(255,255,255,0.04))',
-    color: 'var(--lumiverse-text, #d7d7de)',
-    border: '1px solid var(--lumiverse-border, rgba(255,255,255,0.12))',
+    backgroundColor: 'var(--lumiverse-fill-subtle)',
+    color: 'var(--lumiverse-text)',
+    border: '1px solid var(--lumiverse-border)',
     borderRadius: '6px',
   },
   '.cm-tooltip': {
-    backgroundColor: 'var(--lumiverse-fill, #17171c)',
-    color: 'var(--lumiverse-text, #d7d7de)',
-    border: '1px solid var(--lumiverse-border, rgba(255,255,255,0.12))',
+    backgroundColor: 'var(--lumiverse-fill)',
+    color: 'var(--lumiverse-text)',
+    border: '1px solid var(--lumiverse-border)',
   },
   '.cm-cursor': {
-    borderLeftColor: 'var(--lumiverse-accent, var(--lumiverse-primary, #8c82ff))',
+    borderLeftColor: 'var(--lumiverse-text)',
+  },
+  '.cm-dropCursor': {
+    borderLeftColor: 'var(--lumiverse-text)',
+  },
+  // ── Previously-unthemed base elements (CodeMirror defaults) ──────────
+  // These shipped with hardcoded light/dark colors; now keyed to Lumiverse
+  // tokens so the editor stays coherent with the host theme.
+  '.cm-placeholder': {
+    color: 'var(--lumiverse-text-dim)',
+  },
+  '.cm-specialChar': {
+    color: 'var(--lumiverse-text-dim)',
+  },
+  '.cm-matchingBracket': {
+    backgroundColor: 'color-mix(in srgb, var(--lumiverse-accent, var(--lumiverse-primary)) 28%, transparent)',
+  },
+  '.cm-nonmatchingBracket': {
+    backgroundColor: 'color-mix(in srgb, var(--lumiverse-error) 32%, transparent)',
+  },
+  '.cm-button': {
+    backgroundImage: 'none',
+    backgroundColor: 'var(--lumiverse-fill-subtle)',
+    color: 'var(--lumiverse-text)',
+    border: '1px solid var(--lumiverse-border)',
+    borderRadius: '6px',
+  },
+  '.cm-button:active': {
+    backgroundImage: 'none',
+    backgroundColor: 'var(--lumiverse-fill)',
+  },
+  '.cm-textfield': {
+    backgroundColor: 'var(--lumiverse-fill-subtle)',
+    color: 'var(--lumiverse-text)',
+    border: '1px solid var(--lumiverse-border)',
   },
 })

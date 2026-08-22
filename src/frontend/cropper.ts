@@ -4,17 +4,32 @@
  * host-internal React and is NOT exposed through Spindle, so this mirrors
  * its exact pipeline in vanilla DOM:
  *
- *   pan + zoom a cover-scaled preview (round mask for avatars like the
- *   host modal's cropShape: 'round'; a wide 17:6 rect for banners —
- *   Discord's documented profile-banner geometry, 680×240 minimum, which
- *   we render at 1360×480 for HiDPI) → canvas drawImage crop → PNG
- *   Blob → raw BYTES (never base64) → staged via uploads.ts → stored via
- *   spindle.images.upload (whose sm/lg thumbnails do the display resizing).
+ * Mirrors react-easy-crop's model:
+ *   - the media is contain-fitted into the stage (`objectFit: 'contain'`,
+ *     react-easy-crop's default) so the whole image is visible, centered,
+ *     and zoom/pan cut into it;
+ *   - the crop window (mask) is sized to be contained within the media
+ *     (`getCropSize`: window = min(media, container) at the target aspect),
+ *     centered, with a white border + a darkened outside shadow.
+ *
+ * Then: canvas drawImage crop → PNG Blob → raw BYTES (never base64) →
+ * staged via uploads.ts → stored via spindle.images.upload (whose sm/lg
+ * thumbnails do the display resizing).
+ *
+ * Only static images reach this stage: animated GIFs/videos skip it (canvas
+ * drawImage would flatten them to a still) and upload directly.
+ *
+ * Extensions over the host modal (Discord-parity quality of life):
+ *   - 90° rotation (both directions) + horizontal/vertical flips, applied
+ *     to both the preview and the canvas render (WYSIWYG);
+ *   - a Reset button restoring scale, position, rotation and flips;
+ *   - a zoom slider flanked by small/large image glyphs.
  *
  * The pane carries data-action buttons so it rides the same
  * ctx.ui.events.bindActionHandlers delegation as the rest of the picker —
  * mount it inside an already-bound, connected root.
  */
+import { icon } from './icons'
 
 const ZOOM_MIN = 1
 const ZOOM_MAX = 3
@@ -25,7 +40,7 @@ export interface CropStageOptions {
   file: { bytes: Uint8Array; name: string; mimeType: string }
   /** 'round' matches the host avatar modal's mask; 'rect' for banners etc. */
   shape?: 'round' | 'rect'
-  /** Stage aspect ratio (width / height). 1 for avatars, 17/6 for banners. */
+  /** Window aspect ratio (width / height). 1 for avatars, 17/6 for banners. */
   aspect?: number
   /** Output edge in px — the host crops avatars to 512×512. Ignored when `output` is set. */
   outputSize?: number
@@ -39,20 +54,21 @@ export interface CropStageOptions {
 export interface CropStage {
   el: HTMLElement
   /**
-   * Render the crop to a fresh 512×512 (outputSize) PNG and return its
-   * bytes plus a `.png` file name derived from the original.
+   * Render the crop to a fresh PNG and return its bytes plus a `.png` file
+   * name derived from the original. Rotation and flips are baked into the
+   * output exactly as previewed. Animated sources flatten to a still frame.
    */
   render(): Promise<{ bytes: Uint8Array; fileName: string; mimeType: 'image/png' }>
   /** Release the object URL. Safe to call twice. */
   dispose(): void
-  /** Signal an image-decode failure to the caller. */
+  /** Signal a decode failure to the caller. */
   onError(handler: (message: string) => void): void
 }
 
 export function mountCropStage(options: CropStageOptions): CropStage {
   const { file } = options
   const shape = options.shape ?? 'round'
-  const aspect = options.aspect ?? (shape === 'round' ? 1 : 1)
+  const aspect = options.aspect ?? 1
   const outW = options.output?.width ?? options.outputSize ?? 512
   const outH = options.output?.height ?? options.outputSize ?? 512
 
@@ -60,25 +76,22 @@ export function mountCropStage(options: CropStageOptions): CropStage {
     new Blob([file.bytes.slice().buffer as ArrayBuffer], { type: file.mimeType }),
   )
 
-  // img is positioned with explicit px left/top/width/height so the exact
-  // same numbers feed the canvas crop math (no getBoundingClientRect drift).
-  const img = document.createElement('img')
-  img.className = 'lx-crop-img'
-  img.alt = ''
-  img.draggable = false
-  img.src = objectUrl
+  // Positioned with explicit px so the same numbers feed the canvas crop math.
+  const media = document.createElement('img')
+  media.className = 'lx-crop-media'
+  media.alt = ''
+  media.draggable = false
+  media.src = objectUrl
 
   const stageEl = document.createElement('div')
   stageEl.className = 'lx-crop-stage'
   if (Math.abs(aspect - 1) > 1e-6) {
-    // Wide stages (banner): the CSS default is square, so the ratio must be
-    // applied here. aspect-ratio keeps the height derived from the width.
     stageEl.classList.add('lx-crop-stage-wide')
-    stageEl.style.aspectRatio = `${aspect}`
   }
-  stageEl.appendChild(img)
+  stageEl.appendChild(media)
   const mask = document.createElement('div')
-  mask.className = `lx-crop-mask${shape === 'round' ? ' lx-crop-mask-round' : ''}`
+  mask.className = `lx-crop-mask lx-crop-mask-${shape}`
+  mask.style.visibility = 'hidden'
   mask.setAttribute('aria-hidden', 'true')
   stageEl.appendChild(mask)
 
@@ -91,14 +104,34 @@ export function mountCropStage(options: CropStageOptions): CropStage {
   zoomInput.value = '1'
   zoomInput.setAttribute('aria-label', 'Zoom')
 
-  const controls = document.createElement('div')
-  controls.className = 'lx-crop-controls'
+  //  Toolbar: rotate, flip, zoom, reset
+  const toolbar = document.createElement('div')
+  toolbar.className = 'lx-crop-toolbar'
+  const toolBtn = (name: Parameters<typeof icon>[0], title: string, onClick: () => void): HTMLButtonElement => {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'lx-icon-btn lx-crop-tool'
+    b.title = title
+    b.setAttribute('aria-label', title)
+    b.appendChild(icon(name, 15))
+    b.addEventListener('click', onClick)
+    return b
+  }
+  const resetBtn = document.createElement('button')
+  resetBtn.type = 'button'
+  resetBtn.className = 'lx-crop-reset'
+  resetBtn.textContent = 'Reset'
   const zoomLabel = document.createElement('label')
   zoomLabel.className = 'lx-crop-zoom-label'
-  const zoomText = document.createElement('span')
-  zoomText.textContent = 'Zoom'
-  zoomLabel.append(zoomText, zoomInput)
-  controls.appendChild(zoomLabel)
+  zoomLabel.append(icon('image', 14), zoomInput, icon('image', 20))
+  toolbar.append(
+    toolBtn('rotateCcwSquare', 'Rotate 90° counter-clockwise', rotateCcw),
+    toolBtn('rotateCwSquare', 'Rotate 90° clockwise', rotateCw),
+    toolBtn('flipHorizontal2', 'Flip horizontal', toggleFlipH),
+    toolBtn('flipVertical2', 'Flip vertical', toggleFlipV),
+    zoomLabel,
+    resetBtn,
+  )
 
   const actions = document.createElement('div')
   actions.className = 'lx-crop-actions'
@@ -116,32 +149,54 @@ export function mountCropStage(options: CropStageOptions): CropStage {
 
   const root = document.createElement('div')
   root.className = 'lx-crop'
-  root.append(stageEl, controls, actions)
+  root.append(stageEl, toolbar, actions)
 
-  // ── cover-scaled pan/zoom state (react-easy-crop math, 1:1) ──
+  //  contain-scaled pan/zoom/rotate/flip state (react-easy-crop math)
   let iw = 0 // natural width
   let ih = 0
   let zoom = 1
   let ox = 0 // pan offset in stage px (0 = centered)
   let oy = 0
+  let rotation = 0 // 0 | 90 | 180 | 270 (CW)
+  let flipH = false
+  let flipV = false
   let ready = false
   let errorHandler: ((message: string) => void) | null = null
 
   const stageW = () => stageEl.clientWidth || 0
   const stageH = () => stageEl.clientHeight || stageW() / aspect || 0
-  const coverScale = () => {
+  /** Natural dimensions after rotation (90/270 swap the axes). */
+  const eff = () => (rotation % 180 !== 0 ? { ew: ih, eh: iw } : { ew: iw, eh: ih })
+  /** CONTAIN fit: the whole (post-rotation) image fits inside the stage. */
+  const containScale = () => {
     const w = stageW()
     const h = stageH()
-    return w > 0 && h > 0 && iw > 0 && ih > 0 ? Math.max(w / iw, h / ih) : 1
+    const { ew, eh } = eff()
+    return w > 0 && h > 0 && ew > 0 && eh > 0 ? Math.min(w / ew, h / eh) : 1
   }
-  /** Displayed size at the current zoom. */
+  /** Displayed size of the contained image at the current zoom. */
   const dims = () => {
-    const s = coverScale() * zoom
-    return { dw: iw * s, dh: ih * s }
+    const s = containScale() * zoom
+    const { ew, eh } = eff()
+    return { dw: ew * s, dh: eh * s, s }
+  }
+  /** Crop-window dimensions - The region that becomes the output, kept within
+   * the contained image (react-easy-crop getCropSize). Round = inscribed
+   * square; rect = the target aspect fitted inside the image. */
+  const windowSize = () => {
+    const s = containScale()
+    const { ew, eh } = eff()
+    const baseW = ew * s
+    const baseH = eh * s
+    if (shape === 'rect') {
+      const w = Math.min(baseW, baseH * aspect)
+      return { w, h: w / aspect }
+    }
+    const side = Math.min(baseW, baseH)
+    return { w: side, h: side }
   }
   const clampOffsets = () => {
-    const w = stageW()
-    const h = stageH()
+    const { w, h } = windowSize()
     const { dw, dh } = dims()
     const mx = Math.max(0, (dw - w) / 2)
     const my = Math.max(0, (dh - h) / 2)
@@ -151,28 +206,70 @@ export function mountCropStage(options: CropStageOptions): CropStage {
   const applyLayout = () => {
     if (!ready) return
     clampOffsets()
-    const w = stageW()
-    const h = stageH()
+    const sw = stageW()
+    const sh = stageH()
     const { dw, dh } = dims()
-    img.style.width = `${dw}px`
-    img.style.height = `${dh}px`
-    img.style.left = `${(w - dw) / 2 + ox}px`
-    img.style.top = `${(h - dh) / 2 + oy}px`
+    // Media: natural-aspect box centered in the stage plus pan; the rotation
+    // and flips ride a CSS transform around the box center.
+    media.style.width = `${dw}px`
+    media.style.height = `${dh}px`
+    media.style.left = `${(sw - dw) / 2 + ox}px`
+    media.style.top = `${(sh - dh) / 2 + oy}px`
+    const parts: string[] = []
+    if (rotation) parts.push(`rotate(${rotation}deg)`)
+    if (flipH || flipV) parts.push(`scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`)
+    media.style.transform = parts.length ? parts.join(' ') : 'none'
+    // Mask: the crop window, centered (CSS handles centering), sized to the
+    // window so it never extends beyond the image.
+    const { w, h } = windowSize()
+    mask.style.width = `${w}px`
+    mask.style.height = `${h}px`
+    mask.style.visibility = 'visible'
   }
 
-  img.addEventListener('load', () => {
-    iw = img.naturalWidth
-    ih = img.naturalHeight
+  function rotateCw(): void {
+    rotation = (rotation + 90) % 360
+    applyLayout()
+  }
+  function rotateCcw(): void {
+    rotation = (rotation - 90 + 360) % 360
+    applyLayout()
+  }
+  function toggleFlipH(): void {
+    flipH = !flipH
+    applyLayout()
+  }
+  function toggleFlipV(): void {
+    flipV = !flipV
+    applyLayout()
+  }
+  function resetCrop(): void {
+    zoom = 1
+    ox = 0
+    oy = 0
+    rotation = 0
+    flipH = false
+    flipV = false
+    zoomInput.value = '1'
+    applyLayout()
+  }
+  resetBtn.addEventListener('click', resetCrop)
+
+  const onMediaReady = () => {
+    iw = media.naturalWidth
+    ih = media.naturalHeight
     if (iw > 0 && ih > 0) {
       ready = true
       applyLayout()
     } else {
       errorHandler?.('Could not decode that image — try another file.')
     }
-  })
-  img.addEventListener('error', () => {
+  }
+  const onMediaError = () => {
     errorHandler?.('Could not decode that image — try another file.')
-  })
+  }
+  media.addEventListener('load', onMediaReady)
+  media.addEventListener('error', onMediaError)
 
   // Drag to pan (capture keeps the gesture alive outside the stage).
   let dragStart: { px: number; py: number; ox: number; oy: number } | null = null
@@ -208,22 +305,29 @@ export function mountCropStage(options: CropStageOptions): CropStage {
     el: root,
     async render() {
       if (!ready) throw new Error('Image is still loading — give it a moment.')
-      // canvas.toBlob emits real bytes — the host's cropImage.ts does the
-      // same drawImage crop at the same 512 default; nothing base64 here.
-      const w = stageW()
-      const h = stageH()
-      const s = coverScale() * zoom
-      const { dw, dh } = dims()
+      // Map the crop window (centered, pan offset ox/oy, scale s) to the
+      // output canvas, drawing the natural image with flip + rotation baked
+      // in — byte-for-byte what the preview showed.
+      const { w, h } = windowSize()
+      const s = containScale() * zoom
+      const { ew, eh } = eff()
+      const exLeft = ew / 2 - w / (2 * s) - ox / s
+      const eyTop = eh / 2 - h / (2 * s) - oy / s
+
       const canvas = document.createElement('canvas')
       canvas.width = outW
       canvas.height = outH
       const g = canvas.getContext('2d')
       if (!g) throw new Error('Canvas is unavailable in this browser.')
-      const sx = ((dw - w) / 2 - ox) / s // viewport left in natural px
-      const sy = ((dh - h) / 2 - oy) / s
-      const sw = w / s
-      const sh = h / s
-      g.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH)
+      const kx = (outW * s) / w
+      const ky = (outH * s) / h
+      g.translate(-exLeft * kx, -eyTop * ky)
+      g.scale(kx, ky)
+      g.translate(ew / 2, eh / 2)
+      if (rotation) g.rotate((rotation * Math.PI) / 180)
+      if (flipH || flipV) g.scale(flipH ? -1 : 1, flipV ? -1 : 1)
+      g.drawImage(media, -iw / 2, -ih / 2, iw, ih)
+
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
       if (!blob) throw new Error('Could not encode the cropped image.')
       const bytes = new Uint8Array(await blob.arrayBuffer())

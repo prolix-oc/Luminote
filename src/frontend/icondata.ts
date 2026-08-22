@@ -41,13 +41,17 @@ export type LucideName =
   | 'filePlus2'
   | 'fileText'
   | 'files'
+  | 'flipHorizontal2'
+  | 'flipVertical2'
   | 'folder'
   | 'folderOpen'
   | 'folderPlus'
   | 'folderTree'
+  | 'image'
   | 'imagePlus'
   | 'info'
   | 'loaderCircle'
+  | 'library'
   | 'maximize'
   | 'maximize2'
   | 'minus'
@@ -58,6 +62,8 @@ export type LucideName =
   | 'pencil'
   | 'penLine'
   | 'plus'
+  | 'rotateCcwSquare'
+  | 'rotateCwSquare'
   | 'triangleAlert'
   | 'rows2'
   | 'save'
@@ -66,6 +72,7 @@ export type LucideName =
   | 'spellCheck'
   | 'squarePen'
   | 'trash'
+  | 'trash2'
   | 'type'
   | 'vault'
   | 'wrapText'
@@ -661,6 +668,207 @@ export const LUCIDE_NODES: Record<LucideName, IconNode> =
    }
   ]
  ],
+ 'library': [
+  [
+   'path',
+   {
+    'd': 'm16 6 4 14'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M12 6v14'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M8 8v12'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M4 4v16'
+   }
+  ]
+ ],
+ 'flipHorizontal2': [
+  [
+   'path',
+   {
+    'd': 'm3 7 5 5-5 5V7'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'm21 7-5 5 5 5V7'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M12 20v2'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M12 14v2'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M12 8v2'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M12 2v2'
+   }
+  ]
+ ],
+ 'flipVertical2': [
+  [
+   'path',
+   {
+    'd': 'm17 3-5 5-5-5h10'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'm17 21-5-5-5 5h10'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M4 12H2'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M10 12H8'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M16 12h-2'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M22 12h-2'
+   }
+  ]
+ ],
+ 'image': [
+  [
+   'rect',
+   {
+    'width': '18',
+    'height': '18',
+    'x': '3',
+    'y': '3',
+    'rx': '2',
+    'ry': '2'
+   }
+  ],
+  [
+   'circle',
+   {
+    'cx': '9',
+    'cy': '9',
+    'r': '2'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'm21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'
+   }
+  ]
+ ],
+ 'rotateCcwSquare': [
+  [
+   'path',
+   {
+    'd': 'M20 9V7a2 2 0 0 0-2-2h-6'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'm15 2-3 3 3 3'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M20 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2'
+   }
+  ]
+ ],
+ 'rotateCwSquare': [
+  [
+   'path',
+   {
+    'd': 'M12 5H6a2 2 0 0 0-2 2v3'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'm9 8 3-3-3-3'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2'
+   }
+  ]
+ ],
+ 'trash2': [
+  [
+   'path',
+   {
+    'd': 'M10 11v6'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M14 11v6'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M3 6h18'
+   }
+  ],
+  [
+   'path',
+   {
+    'd': 'M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'
+   }
+  ]
+ ],
  'maximize': [
   [
    'path',
@@ -1165,7 +1373,7 @@ export const LUCIDE_NODES: Record<LucideName, IconNode> =
   [
    'path',
    {
-    'd': 'M15 3v18'
+    'd': 'M15 5 L15 19'
    }
   ],
   [
@@ -1189,7 +1397,7 @@ export const LUCIDE_NODES: Record<LucideName, IconNode> =
   [
    'path',
    {
-    'd': 'M15 3v18'
+    'd': 'M15 5 L15 19'
    }
   ],
   [

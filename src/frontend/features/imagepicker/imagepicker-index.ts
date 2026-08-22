@@ -19,10 +19,11 @@
  * (frontend/uploads.ts), the backend consumes it by id with
  * `spindle.uploads.get()` and stores it via `spindle.images.upload()`,
  * which generates the sm/lg thumbnails that do all display resizing.
- * Avatar-like slots (vault avatar, widget icon) pass through a 512×512 crop;
- * banner stills use a 1360×480 17:6 crop. This mirrors the host's avatar
- * resizer while staying inside extension-owned DOM. Animated GIFs and videos
- * skip canvas cropping so animation survives.
+ * Avatar-like slots (vault avatar, avatar decoration, widget icon/decoration)
+ * pass through a 512×512 round crop; banners use a 1360×480 17:6 crop.
+ * This mirrors the host's avatar resizer while staying inside extension-owned
+ * DOM. Animated GIFs and videos skip the crop stage and upload directly so
+ * their animation survives.
  *
  * Interactions ride the host's `ctx.ui.events.bindActionHandlers` helper,
  * bound AFTER the popup root is appended — the documented contract is
@@ -44,7 +45,7 @@ import type { RpcClient } from '../../rpc'
 import { stageUpload } from '../../uploads'
 
 /** Slots displayed square/circle get the avatar crop stage (Discord-style). */
-const AVATAR_CROP_SLOTS: ReadonlySet<ImageSlot> = new Set(['vault-pfp', 'widget-icon'])
+const AVATAR_CROP_SLOTS: ReadonlySet<ImageSlot> = new Set(['vault-pfp', 'vault-decor', 'widget-icon', 'widget-decor'])
 const WIDE_PREVIEW_SLOTS: ReadonlySet<ImageSlot> = new Set(['vault-nameplate', 'banner'])
 
 export interface ImagePickerOptions {
@@ -119,9 +120,9 @@ export async function openImagePicker(
       el('div', {
         class: 'lx-lm-select-desc',
         text: cropKind === 'banner'
-          ? `${ART_ACCEPT_LABEL} up to 32 MB. Stills use a 17:6 crop; GIFs and videos stay animated.`
+          ? `Upload ${ART_ACCEPT_LABEL} up to 32 MB. Banner ratio is 17:6.`
           : croppable
-            ? `${ART_ACCEPT_LABEL} up to 32 MB. Stills can be cropped after picking; GIFs and videos stay animated.`
+            ? `Upload ${ART_ACCEPT_LABEL} up to 32 MB.`
             : `${ART_ACCEPT_LABEL} up to 32 MB.`,
       }),
       el('div', { class: 'lx-lm-select-actions' }, uploadBtn, removeBtn),
@@ -147,10 +148,16 @@ export async function openImagePicker(
     for (let i = 0; i < 6; i += 1) {
       const url = recents[i]
       if (url) {
-        slotsWrap.appendChild(el('button', {
+        slotsWrap.appendChild(el('div', { class: 'lx-lm-slot-wrap' },
+          el('button', {
           class: 'lx-lm-slot-btn',
           attrs: { 'data-action': `pick:${i}`, type: 'button', title: 'Use this media' },
-        }, el('span', { class: 'lx-lm-slot' }, mediaThumbEl('lx-lm-slot-media', url, mimes[url] ?? null, { autoplay: false }))))
+          }, el('span', { class: 'lx-lm-slot' }, mediaThumbEl('lx-lm-slot-media', url, mimes[url] ?? null, { autoplay: false }))),
+          el('button', {
+            class: 'lx-lm-slot-trash',
+            attrs: { 'data-action': `forget:${i}`, type: 'button', title: 'Remove', 'aria-label': 'Remove' },
+          }, icon('trash2', 13)),
+        ))
       } else {
         slotsWrap.appendChild(el('button', {
           class: 'lx-lm-slot-btn',
@@ -222,7 +229,9 @@ export async function openImagePicker(
       return
     }
     const normalizedFile = { ...file, mimeType }
-    // GIFs and videos bypass the crop stage: canvas would flatten the frames.
+    // Animated media can't be cropped without flattening to a
+    // still — Upload it directly so the animation survives; only static
+    // images open the crop stage.
     if (croppable && mimeType !== 'image/gif' && !mimeType.startsWith('video/')) {
       errorEl.classList.add('lx-hidden')
       selectPane.classList.add('lx-hidden')
@@ -274,6 +283,23 @@ export async function openImagePicker(
     }
   }
 
+  async function forgetRecent(index: number): Promise<void> {
+    if (busy) return
+    const url = recents[index]
+    if (!url) return
+    errorEl.classList.add('lx-hidden')
+    try {
+      const res = await rpc.call<{ recents: string[]; mimes: Record<string, string> }>('image.forget', {
+        slot, url,
+      })
+      recents = res.recents
+      mimes = res.mimes
+      syncSlots()
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not remove image')
+    }
+  }
+
   async function clear(): Promise<void> {
     if (busy) return
     setBusy(true)
@@ -296,7 +322,10 @@ export async function openImagePicker(
     'crop-confirm': () => { void confirmCrop() },
     'crop-cancel': () => { closeCrop() },
     ...Object.fromEntries(
-      [0, 1, 2, 3, 4, 5].map((i) => [`pick:${i}`, () => { void pickRecent(i) }]),
+      [0, 1, 2, 3, 4, 5].flatMap((i) => [
+        [`pick:${i}`, () => { void pickRecent(i) }],
+        [`forget:${i}`, () => { void forgetRecent(i) }],
+      ]),
     ),
   }, { attribute: 'data-action' })
 

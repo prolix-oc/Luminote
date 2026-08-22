@@ -25,7 +25,6 @@ import {
 } from '@codemirror/commands'
 import {
   bracketMatching,
-  defaultHighlightStyle,
   indentOnInput,
   syntaxHighlighting,
 } from '@codemirror/language'
@@ -174,7 +173,6 @@ export function createLeafEditor(
         search({ top: true }),
         languageExtension(),
         syntaxHighlighting(lumiverseHighlight, { fallback: true }),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         editorTheme,
         keymap.of([
           {

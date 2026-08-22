@@ -464,6 +464,10 @@ export const requestSchemas = {
     slot: z.enum(IMAGE_SLOTS),
     vaultId: id.optional(),
   }).strict(),
+  'image.forget': z.object({
+    slot: z.enum(RECENT_IMAGE_SLOTS),
+    url: z.string().min(1).max(2048),
+  }).strict(),
 
   'workspace.get': z.object({ vaultId: id }).strict(),
   'workspace.set': z.object({ vaultId: id, workspace: wsSnapshot }).strict(),

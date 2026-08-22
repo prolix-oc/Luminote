@@ -150,7 +150,7 @@ export function createTreeFeature(
     class: 'lx-icon-btn lx-vault-settings-btn',
     title: 'Vault options…',
     attrs: { 'aria-label': 'Vault options' },
-  }, icon('settings', 15))
+  }, icon('library', 15))
   /** Nameplate media layer — sits behind the bar's controls (see CSS). */
   const nameplateLayerRef = el('div', { class: 'lx-vault-bar-nameplate lx-hidden', attrs: { 'aria-hidden': 'true' } })
   const vaultBar = el('div', { class: 'lx-vault-bar' }, nameplateLayerRef, pfpBtn, vaultNameInput, vaultMenuBtn)
@@ -652,7 +652,7 @@ export function createTreeFeature(
   function sortLabel(): string {
     const { sortBy, sortDir } = store.get().settings.tree
     if (sortBy === 'custom') return 'Custom'
-    if (sortBy === 'name') return sortDir === 'asc' ? 'Name A–Z' : 'Name Z–A'
+    if (sortBy === 'name') return sortDir === 'asc' ? 'Name A to Z' : 'Name Z to A'
     if (sortBy === 'modified') return sortDir === 'desc' ? 'Modified (New)' : 'Modified (Old)'
     return sortDir === 'desc' ? 'Created (New)' : 'Created (Old)'
   }
@@ -934,10 +934,22 @@ export function createTreeFeature(
   // ── Vault bar ──
   const nameplateLayer = nameplateLayerRef
   let nameplateSig = ''
+  let avatarSig = ''
+  let avatarDecorSig = ''
 
   function syncVaultBar(): void {
     const vault = activeVault()
     const ui = store.get().settings.ui
+
+    // The avatar and its decoration) rebuild only when their URL/MIME
+    // signature actually changes — an unconditional replaceChildren() here
+    // would destroy and recreate the <video> element on every save/tree
+    // refresh, restarting it from frame 0 (the "frozen avatar" symptom).
+    const nextAvatarSig = `${vault?.pfp ?? ''}|${vault?.pfpMime ?? ''}`
+    const nextDecorSig = `${vault?.pfpDecor ?? ''}|${vault?.pfpDecorMime ?? ''}`
+    if (nextAvatarSig !== avatarSig || nextDecorSig !== avatarDecorSig) {
+      avatarSig = nextAvatarSig
+      avatarDecorSig = nextDecorSig
     pfpBtn.replaceChildren()
     if (vault?.pfp) {
       pfpBtn.appendChild(mediaThumbEl('lx-vault-pfp-img', vault.pfp, vault.pfpMime ?? null))
@@ -950,6 +962,7 @@ export function createTreeFeature(
       pfpBtn.classList.add('lx-vault-pfp-decorated')
     } else {
       pfpBtn.classList.remove('lx-vault-pfp-decorated')
+      }
     }
     // Avatar customization is scoped to the workspace vault button. The
     // settings-drawer profile preview deliberately keeps its own fixed size

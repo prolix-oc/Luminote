@@ -11,8 +11,9 @@
  *
  * HTML/SVG islands: a fenced ```html / ```svg block — or a substantial raw
  * HTML block — whose range has no cursor inside collapses into a rendered
- * shadow-DOM island (see liveIslands.ts). Clicking the island drops the
- * caret back into the source for editing.
+ * shadow-DOM island (see liveIslands.ts). Raw `<svg>` blocks render inline
+ * in the light DOM instead (matching reading mode), including single-line
+ * SVGs. Clicking the island drops the caret back into the source for editing.
  *
  * This is an editor-only concern: the reading-mode view renders the same
  * markdown through the full chat-parity pipeline instead.
@@ -28,10 +29,12 @@ import { syntaxTree } from '@codemirror/language'
 import { StateField, type Extension, type Range } from '@codemirror/state'
 import {
   absorbHtmlRun,
+  inlineSvgDecorationFor,
   islandDecorationFor,
   islandLangForFence,
   isLoneCommentBlock,
   rawHtmlIsIsland,
+  singleLineSvgRange,
 } from './liveIslands'
 
 const HIDE = Decoration.replace({})
@@ -137,8 +140,32 @@ function buildIslandDecorations(state: EditorView['state']): DecorationSet {
         const commentless = raw.replace(/^\s*(<!--[\s\S]*?-->\s*)+/, '')
         const lang = /^\s*<\s*svg\b/i.test(commentless) ? 'svg' : 'html'
         absorbedUntil = merged.to
+        // Raw SVGs render inline (light DOM, no shadow island) to match
+        // reading mode — only HTML keeps the shadow-DOM island treatment.
+        if (lang === 'svg') {
+          ranges.push(inlineSvgDecorationFor(state, merged.from, merged.to, commentless, merged.from))
+        } else {
         ranges.push(islandDecorationFor(state, merged.from, merged.to, raw, lang, merged.from))
+        }
         return false
+      }
+
+      // A single-line `<svg>…</svg>` parses as inline HTMLTag nodes inside a
+      // Paragraph (multi-line SVG becomes an HTMLBlock above). Render it
+      // inline too, so "oneline" SVG notes behave like reading mode instead
+      // of leaving raw source visible. When text sits directly above/below
+      // (no blank line) the SVG shares that Paragraph with the text, so scan
+      // the paragraph's lines rather than testing the whole paragraph text.
+      if (name === 'Paragraph') {
+        const svg = singleLineSvgRange(state, node.from, node.to)
+        if (svg) {
+          if (!selectionTouches(svg.from, svg.to)) {
+            absorbedUntil = svg.to
+            const raw = state.sliceDoc(svg.from, svg.to).trim()
+            ranges.push(inlineSvgDecorationFor(state, svg.from, svg.to, raw, svg.from))
+            return false
+          }
+        }
       }
       return undefined
     },

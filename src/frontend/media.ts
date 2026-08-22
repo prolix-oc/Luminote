@@ -31,7 +31,10 @@ function videoEl(className: string, src: string, autoplay: boolean): HTMLVideoEl
       playsinline: 'true',
       'aria-hidden': 'true',
       draggable: 'false',
-      ...(autoplay ? { autoplay: 'true', loop: 'true', preload: 'auto' } : { preload: 'metadata' }),
+      // preload="metadata" mirrors the host's WallpaperLayer: buffer lazily,
+      // let autoplay+loop pull frames on demand instead of downloading the
+      // whole asset up front (fewer stuck decoders, faster first paint).
+      ...(autoplay ? { autoplay: 'true', loop: 'true', preload: 'metadata' } : { preload: 'metadata' }),
     },
   }) as HTMLVideoElement
   video.muted = true // property too — the attribute alone can lose to defaults

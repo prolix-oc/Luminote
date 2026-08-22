@@ -151,6 +151,14 @@ function imagesAvailable(): boolean {
   }
 }
 
+function mediaAvailable(): boolean {
+  try {
+    return !!spindle.permissions?.has?.('media')
+  } catch {
+    return false
+  }
+}
+
 // ── Image slots (avatars / decorations / nameplate / banner) ────────────
 // One uploader feeds every image the extension shows: vault avatar,
 // avatar decoration, vault nameplate, widget icon/decoration, and the
@@ -316,21 +324,30 @@ export async function imageSet(
       if (!mime) {
         throw new Error('Use a WEBM, WEBP, MP4, GIF, PNG, JPG, or JPEG file.')
       }
+      const uploadName = fileName ?? staged.fileName ?? `luminote-${slot}${vaultId ? `-${vaultId}` : ''}.png`
+
+      // Videos are normalized to silent H.264 MP4 through the host media
+      // pipeline (matching Lumiverse's wallpaper uploads) so looping art
+      // plays reliably. Falls back to the raw bytes when the media
+      // permission is missing or the transcode fails.
+      const normalized = await transcodeVideoForStorage(uploadId, userId, staged, mime, uploadName)
+
       // The host image store persists stills, GIFs and videos alike
       // (developer-docs/backend-api/images.md: mime_type accepts video/*)
       // and generates poster thumbnails for video on demand.
       const uploaded = await spindle.images.upload({
-        data: staged.data,
-        filename: fileName ?? staged.fileName ?? `luminote-${slot}${vaultId ? `-${vaultId}` : ''}.png`,
-        mime_type: mime,
+        data: normalized ? normalized.data : staged.data,
+        filename: normalized ? normalized.filename : uploadName,
+        mime_type: normalized ? normalized.mime : mime,
       }, userId)
       const url = uploaded.url
       const imageId = uploaded.id
-      await rememberImageMime(url, mime)
-      await applyImageToSlot(slot, vaultId, url, imageId, mime)
+      const storedMime = normalized ? normalized.mime : mime
+      await rememberImageMime(url, storedMime)
+      await applyImageToSlot(slot, vaultId, url, imageId, storedMime)
       const recents = slot === 'banner' ? undefined : await bumpImageRecents(slot, url)
       await pruneImageMimesToRecents()
-      return { url, mime, recents, mimes: recents ? await mimesFor(recents) : undefined }
+      return { url, mime: storedMime, recents, mimes: recents ? await mimesFor(recents) : undefined }
     } finally {
       // Consumed — free the staged file rather than letting it sit until TTL.
       await spindle.uploads.delete(uploadId, userId).catch(() => undefined)
@@ -342,6 +359,58 @@ export async function imageSet(
 function stagedMime(staged: { fileName?: string }, hint: string | undefined, fileName: string | undefined): string | null {
   return normalizeArtMime(hint, fileName ?? staged.fileName)
 }
+
+/**
+ * Normalize a staged video through the host media pipeline before storing it,
+ * mirroring Lumiverse's own wallpaper upload path: transcode to H.264 MP4
+ * with the audio stripped, so the asset loops and plays reliably across
+ * browsers (WebM timestamp quirks and software HEVC are the two big sources
+ * of frozen/looping art). The host reads the staged file straight from disk
+ * (`kind: "upload"`), so the bytes never round-trip through the worker.
+ *
+ * Returns null (caller stores the original) when the source isn't a video,
+ * is a WebM (whose alpha transparency must survive), the `media` permission
+ * is missing, or the transcode fails — GIFs and stills always pass through
+ * untranscoded.
+ */
+async function transcodeVideoForStorage(
+  uploadId: string,
+  userId: string | undefined,
+  staged: { fileName?: string },
+  mime: string,
+  uploadName: string,
+): Promise<{ data: Uint8Array; mime: string; filename: string } | null> {
+  if (!mime.startsWith('video/')) return null
+  // WebM (VP8/VP9) is the only format that can carry alpha transparency, and
+  // transcoding it to H.264 MP4 (which has no alpha channel — the host forces
+  // yuv420p) would bake the transparent pixels to black. Store WebM as-is so
+  // its transparency survives; only MP4/other sources get the H.264 pass.
+  if (mime === 'video/webm') return null
+  if (!mediaAvailable()) return null
+  try {
+    const outName = uploadName.replace(/\.[^.]+$/, '') + '.mp4'
+    const result = await spindle.media.transcodeVideo({
+      source: { kind: 'upload', upload_id: uploadId, filename: staged.fileName, mime_type: mime },
+      output_format: 'mp4',
+      video_codec: 'h264',
+      audio_codec: 'none',
+      faststart: true,
+      filename: outName,
+      userId,
+    })
+    if (!result?.data?.length) return null
+    return {
+      data: result.data,
+      mime: result.mime_type || 'video/mp4',
+      filename: result.filename || outName,
+    }
+  } catch (err) {
+    // ffmpeg unavailable or the transcode failed — store the original.
+    console.warn('[luminote] Video transcode failed, storing original:', err)
+    return null
+  }
+}
+
 
 /** Apply an existing recent — never uploads, never duplicates the bucket. */
 export async function imageSelect(
@@ -372,6 +441,21 @@ export async function imageSelect(
 export async function imageClear(slot: string, vaultId: string | undefined): Promise<void> {
   return withLock('image-slots', async () => {
     await applyImageToSlot(slot, vaultId, null, null, null)
+  })
+}
+
+/** Drop one URL from a slot's recents MRU. Never touches the applied asset. */
+export async function imageForgetRecent(
+  slot: string,
+  url: string,
+): Promise<{ recents: string[]; mimes: Record<string, string> }> {
+  return withLock('image-recents', async () => {
+    const all = await readImageRecents()
+    const next = (all[slot] ?? []).filter((u) => u !== url)
+    all[slot] = next
+    await spindle.storage.setJson(IMAGE_RECENTS_PATH, all, { indent: 2 })
+    await pruneImageMimesToRecents()
+    return { recents: next, mimes: await mimesFor(next) }
   })
 }
 

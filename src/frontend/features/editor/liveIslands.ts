@@ -8,6 +8,12 @@
  * raw markup for editing; clicking outside re-renders the island. This keeps
  * one editable source of truth instead of separate .html/.svg notes.
  *
+ * Raw `<svg>` blocks are the exception: they render INLINE in the light DOM
+ * (InlineSvgWidget below) with no shadow island — matching reading mode's
+ * inline SVG, since the SVG sanitizer already hardens them (local refs only,
+ * `feimage`/`image` blocklist). Single-line SVGs are handled too, since
+ * @lezer/markdown parses them as inline HTMLTag nodes inside a Paragraph.
+ *
  * The island host mirrors Lumiverse chat's structure so host tokens still
  * apply: `<div class="lx-html-island" data-lumiverse-html-island="true">` with
  * a shadow root containing `<style data-lx-island-base>` (reset + theme
@@ -55,6 +61,42 @@ const LONE_COMMENT_RE = /^\s*<!--[\s\S]*?-->\s*$/
 
 export function isLoneCommentBlock(text: string): boolean {
   return LONE_COMMENT_RE.test(text)
+}
+
+/**
+ * A single-line raw `<svg>…</svg>` — the whole line is exactly one SVG root.
+ * @lezer/markdown parses a one-line SVG as inline `HTMLTag` nodes inside a
+ * `Paragraph` (only a multi-line block becomes an `HTMLBlock`), so live
+ * preview needs its own detector to render it inline like reading mode.
+ */
+export function isSingleLineSvg(text: string): boolean {
+  if (text.includes('\n')) return false
+  const trimmed = text.trim()
+  return /^<svg\b/i.test(trimmed) && /<\/svg>\s*$/i.test(trimmed)
+}
+
+/**
+ * Find the range of a complete single-line `<svg>…</svg>` inside `[from, to]`.
+ * Unlike `isSingleLineSvg` (which tests one exact string), this scans each
+ * full line of the given range, so an SVG sitting between adjacent text lines
+ * — no blank lines, where the whole run is a single `Paragraph` — is still
+ * detected and rendered instead of reverting to raw source.
+ */
+export function singleLineSvgRange(
+  state: EditorState,
+  from: number,
+  to: number,
+): { from: number; to: number } | null {
+  const startLine = state.doc.lineAt(from).number
+  const endLine = state.doc.lineAt(to).number
+  for (let n = startLine; n <= endLine; n++) {
+    const line = state.doc.line(n)
+    // Only a line that sits entirely inside the range can be a complete
+    // single-line SVG (a partial first/last line cannot).
+    if (line.from < from || line.to > to) continue
+    if (isSingleLineSvg(line.text)) return { from: line.from, to: line.to }
+  }
+  return null
 }
 
 // ── Tag-balance run absorption (chat-parity island extents) ─────────────
@@ -281,6 +323,78 @@ export function islandDecorationFor(
     to,
     value: Decoration.replace({
       widget: new HtmlIslandWidget(rawSource, lang, caretFrom),
+      block: true,
+    }),
+  }
+}
+
+/**
+ * Inline SVG widget — renders a raw `<svg>` block directly in the LIGHT DOM
+ * (no shadow root, no island header strip), matching reading mode's inline
+ * SVG rendition. `sanitizeRichHtml` already allows inline SVG with the full
+ * upstream hardening (local `#ref`/`url()` checks, `feimage`/`image` blocklist,
+ * etc.), so no island isolation is needed — the SVG is just sanitized markup.
+ * Clicking still drops the caret back into the source for editing.
+ */
+class InlineSvgWidget extends WidgetType {
+  constructor(
+    readonly rawSource: string,
+    /** Where the caret should land when the widget is clicked into edit mode. */
+    readonly caretFrom: number,
+  ) {
+    super()
+  }
+
+  override eq(other: InlineSvgWidget): boolean {
+    return other.rawSource === this.rawSource
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const host = document.createElement('div')
+    host.className = 'lx-live-svg'
+    host.setAttribute('role', 'group')
+    host.setAttribute('title', 'Edit SVG source')
+
+    const enterEdit = (event: Event): void => {
+      event.preventDefault()
+      event.stopPropagation()
+      const pos = Math.min(this.caretFrom, view.state.doc.length)
+      view.dispatch({ selection: { anchor: pos }, scrollIntoView: true })
+      view.focus()
+    }
+    host.addEventListener('mousedown', enterEdit)
+
+    const frame = document.createElement('div')
+    frame.className = 'lx-live-svg-frame'
+    frame.innerHTML = sanitizeRichHtml(this.rawSource)
+    host.appendChild(frame)
+
+    return host
+  }
+
+  override ignoreEvent(): boolean {
+    return true
+  }
+
+  override get estimatedHeight(): number {
+    const lines = this.rawSource.split('\n').length
+    return Math.min(480, Math.max(40, lines * 14))
+  }
+}
+
+/** Replace-decoration for a raw `<svg>` block rendered inline (no island). */
+export function inlineSvgDecorationFor(
+  state: EditorState,
+  from: number,
+  to: number,
+  rawSource: string,
+  caretFrom: number,
+): { from: number; to: number; value: Decoration } {
+  return {
+    from,
+    to,
+    value: Decoration.replace({
+      widget: new InlineSvgWidget(rawSource, caretFrom),
       block: true,
     }),
   }

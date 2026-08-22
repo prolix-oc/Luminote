@@ -162,6 +162,11 @@ const handlers: Record<OpName, Handler> = {
     await store.imageClear(slot, vaultId)
     return { ok: true }
   },
+
+  'image.forget': async (p) => {
+    const { slot, url } = p as { slot: string; url: string }
+    return store.imageForgetRecent(slot, url)
+  },
 }
 
 /** Ops whose success changes data other tabs may be displaying. */

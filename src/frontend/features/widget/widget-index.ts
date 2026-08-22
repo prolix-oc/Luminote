@@ -27,6 +27,19 @@ export interface WidgetFeature {
   destroy(): void
 }
 
+/** A horizontal slice of the screen the widget should not overlap. */
+export interface DockOcclusion {
+  side: 'left' | 'right'
+  left: number
+  right: number
+}
+
+export interface WidgetFeatureOptions {
+  /** Live lookup for the host dock panel's occupied rect, resolved at call
+   * time so the edge snap (and reset spot) avoid overlapping the dock. */
+  getDockRect?: () => DockOcclusion | null
+}
+
 /** Mirrors the host's viewport padding (12px). */
 const VIEWPORT_PAD = 12
 const TOP_SAFE_MARGIN = 48
@@ -61,18 +74,29 @@ export function defaultWidgetPosition(size: number = 44): { x: number; y: number
 /**
  * Edge glide target: snaps to the nearest horizontal screen edge (left or right)
  * while preserving safe vertical clearance away from top headers and bottom chat inputs.
+ * When a dock panel is open on one side, snapping to that side instead lands
+ * the widget just inside the dock's inner edge so it never hides underneath.
  */
 export function snapTarget(
   pos: { x: number; y: number },
   size: { width: number; height: number },
+  dock: DockOcclusion | null = null,
 ): { x: number; y: number } {
   const vw = typeof window !== 'undefined' ? (document.documentElement?.clientWidth || window.innerWidth || 1920) : 1920
   const vh = typeof window !== 'undefined' ? (document.documentElement?.clientHeight || window.innerHeight || 1080) : 1080
   const pad = VIEWPORT_PAD
 
-  // Horizontal nearest edge (left vs right)
-  const left = pad
-  const right = Math.max(pad, vw - size.width - pad)
+  // Horizontal nearest edge (left vs right). A dock occupying one side shifts
+  // that side's snap line inward to clear the panel.
+  let left = pad
+  let right = Math.max(pad, vw - size.width - pad)
+  if (dock) {
+    if (dock.side === 'left') {
+      left = Math.min(right, dock.right + pad)
+    } else {
+      right = Math.max(left, dock.left - size.width - pad)
+    }
+  }
   const snapX = Math.abs(pos.x - left) < Math.abs(pos.x - right) ? left : right
 
   // Vertical safe clearance (avoids overlapping top nav or bottom input bar)
@@ -93,7 +117,9 @@ export function createWidgetFeature(
   ctx: SpindleFrontendContext,
   store: Store,
   persistSettings: (settings: LuminoteSettings) => Promise<void>,
+  options: WidgetFeatureOptions = {},
 ): WidgetFeature {
+  const getDockRect = options.getDockRect
   const disposer = createDisposer()
   const ac = new AbortController()
   disposer.push(() => ac.abort())
@@ -204,9 +230,40 @@ export function createWidgetFeature(
   }
 
   /**
-   * Smoothly glide the floating widget from its current position to the target.
-   * Directly drives transition on both the host container and the extension root
-   * with forced reflow and clean teardown.
+   * The host renders the float widget as three nested elements:
+   *   .widget (position: fixed, inline left/top) > .content > extension root.
+   * The CSS `left`/`top` that actually move live on the OUTER fixed `.widget`
+   * div, so the glide transition must be applied there — not on the inner
+   * `.content`/root (which never move, and are what the old code targeted,
+   * producing a "snap then wait" instead of a glide). Walk up to the first
+   * fixed/absolute-positioned ancestor to stay robust against host DOM changes.
+   */
+  function positionedHostEl(): HTMLElement | null {
+    let el: HTMLElement | null = widget?.root?.parentElement ?? null
+    while (el) {
+      try {
+        const pos = getComputedStyle(el).position
+        if (pos === 'fixed' || pos === 'absolute') return el
+      } catch {
+        return el
+      }
+      el = el.parentElement
+    }
+    return widget?.root ?? null
+  }
+
+  /** Clear any lingering glide transition (empty string falls back to the
+   * host's stylesheet, restoring its own box-shadow transition). */
+  function clearGlideTransition(): void {
+    const target = positionedHostEl()
+    if (target) target.style.transition = ''
+    if (widget?.root) widget.root.style.transition = ''
+  }
+
+  /**
+   * Smoothly glide the floating widget from its current position to the target
+   * by animating the host's positioned `.widget` element, then syncing the host
+   * store via moveTo (a no-op visually, since the inline left/top already match).
    */
   function glideWidget(
     from: { x: number; y: number },
@@ -222,31 +279,34 @@ export function createWidgetFeature(
     }
 
     if (!animate || (Math.abs(from.x - to.x) < 1 && Math.abs(from.y - to.y) < 1)) {
+      clearGlideTransition()
       widget.moveTo(to.x, to.y)
       persistPosition(to)
       return
     }
 
-    const hostEl = widget.root.parentElement ?? widget.root
-    const trans = `left ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1), top ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1), transform ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1)`
-
-    // Apply easing transition to both host container and root
-    hostEl.style.transition = trans
-    widget.root.style.transition = trans
-    void hostEl.offsetHeight // Force layout flush to commit transition baseline
-
-    // Dispatch move to destination
-    widget.moveTo(to.x, to.y)
-    if (hostEl !== widget.root) {
-      hostEl.style.left = `${to.x}px`
-      hostEl.style.top = `${to.y}px`
+    const target = positionedHostEl()
+    if (!target) {
+      widget.moveTo(to.x, to.y)
+      persistPosition(to)
+      return
     }
+
+    const trans = `left ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1), top ${durationMs}ms cubic-bezier(0.16, 1, 0.3, 1)`
+    target.style.transition = trans
+    void target.offsetHeight // Force layout flush to commit the transition baseline
+
+    // Drive the animated position on the element that actually moves, then
+    // mirror it into the host store so persistence and React state stay in sync.
+    target.style.left = `${to.x}px`
+    target.style.top = `${to.y}px`
+    widget.moveTo(to.x, to.y)
     persistPosition(to)
 
-    // Remove transition after glide completes so manual drags remain instantaneous
+    // Drop the transition after the glide so manual drags stay instantaneous
+    // and the host's own box-shadow transition returns.
     glideTimeout = setTimeout(() => {
-      if (hostEl) hostEl.style.transition = 'none'
-      if (widget?.root) widget.root.style.transition = 'none'
+      clearGlideTransition()
       glideTimeout = null
     }, durationMs + 40)
   }
@@ -335,11 +395,8 @@ export function createWidgetFeature(
       gesture = event.button === 0
         ? { startX: event.clientX, startY: event.clientY, moved: false }
         : null
-      // Zero lag during active drag
-      if (widget) {
-        widget.root.style.transition = 'none'
-        if (widget.root.parentElement) widget.root.parentElement.style.transition = 'none'
-      }
+      // Zero lag during active drag — clear any in-flight glide transition.
+      clearGlideTransition()
     })
 
     const onGestureMove = (event: PointerEvent) => {
@@ -412,9 +469,10 @@ export function createWidgetFeature(
     // ── Drag end: edge magnetic glide ──
     unsubs.push(widget.onDragEnd((pos) => {
       const size = store.get().settings.ui.widgetSize
+      const dock = getDockRect?.() ?? null
       let target = clampWidgetPosition(pos, { width: size, height: size })
       if (store.get().settings.ui.widgetSnap) {
-        target = snapTarget(pos, { width: size, height: size })
+        target = snapTarget(pos, { width: size, height: size }, dock)
       }
       glideWidget(pos, target, store.get().settings.ui.widgetSnapAnimMs)
     }))
@@ -424,7 +482,13 @@ export function createWidgetFeature(
 
   function resetSpotPosition(): void {
     const size = store.get().settings.ui.widgetSize
-    const spot = defaultWidgetPosition(size)
+    const dock = getDockRect?.() ?? null
+    let spot = defaultWidgetPosition(size)
+    // Default spot is top-right; when a right dock is open, tuck it just left
+    // of the dock instead of under it.
+    if (dock && dock.side === 'right') {
+      spot = { x: dock.left - size - VIEWPORT_PAD, y: spot.y }
+    }
     const curPos = widget?.getPosition() ?? spot
     glideWidget(curPos, spot, store.get().settings.ui.widgetSnapAnimMs)
     const settings = store.get().settings

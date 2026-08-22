@@ -8,8 +8,9 @@
  *   .lx-setting-body     labelled vault statistics
  *   .lx-setting-scroll   lx-scoped collapsible cards: Editor, Floating
  *                        Widget (including its art), Overlay, Sidebar,
- *                        Status Bar, Vault (including avatar controls),
- *                        Permissions, Data
+ *                        Status Bar, Vault (including avatar controls).
+ *                        The former Permissions / Data cards now live in
+ *                        the panel-header guide (registerDrawerTab `guide`).
  *
  * Scoping contract (the user skins this surface): every block ships
  * lx-prefixed classes — section roots get `lx-setting-section-{slug}` via
@@ -75,6 +76,55 @@ interface SettingPatch {
 /** Notebook-pen glyph, inlined for the drawer tab icon slot. */
 const DRAWER_TAB_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>'
 
+/**
+ * Panel-header guide (Spindle `guide` on `registerDrawerTab`) — the host
+ * renders this markdown in its native guide viewer.
+ */
+const DRAWER_TAB_GUIDE = `# Luminote
+
+Inspired by ObsidianMD, this Spindle extension focuses on being an extremely easy to use note-taking workspace.
+
+## Getting Started
+
+Vaults are how Luminote organizes your workspace through Spindle. To create a vault you navigate to the nameplate in the bottom corner, click "Vault Options…" → "Create New Vault…" This will prompt a dialog box to name your vault.
+
+### Creating Notes
+
+With your vault set up, you can finally start adding notes and typing away. Luminote supports multiple ways of creating notes:
+1. Navigate to the bottom of the file-tree and selecting "New Note".
+2. At the center of a empty pane and selecting "New Note".
+3. Right-clicking the filetree.
+4. Right-clicking a folder.
+
+By default newly created notes are named "Untitled". Either accept by pressing \`Enter\` or overwrite with your desired name. Luminote will create the file and immediately open it for you to start typing.
+
+### Creating Folders
+
+Creating folders is almost analogous to creating notes:
+1. Navigating to the bottom of the file-tree and selecting "New Folder".
+2. Right-clicking the filetree.
+3. Right-clicking a folder.
+
+### Permissions
+
+App manipulation: Required → Responsible for the overlay.
+Ephemeral storage: Optional → Allows for a 7-day rolling backup.
+Images & Media: Optional → For use in the Vault Avatar, Widget Icon, Decorations, Nameplate and Banner.
+UI panels: Required → Responsible for the floating widget & half-dock.
+
+### Data & Storage
+
+It's strongly recommended that you regularly back up your notes from time-to-time. Notes themselves are stored as plain text(.txt) and can be accessed at (data/extensions/luminote/storage/vaults/vault-string/blob/text-documents).
+
+Ephemeral storage acts as a 7-day rolling backup at (data/extensions/luminote/storage/.ephemeral/backups/vault-string/text-documents).
+
+Media and Images that you upload for use in this extension are stored at (data/extensions/images).
+
+---
+
+wip
+`
+
 export function createSettingsDrawerFeature(
   ctx: SpindleFrontendContext,
   store: Store,
@@ -92,7 +142,9 @@ export function createSettingsDrawerFeature(
       shortName: 'Note',
       description: 'Vault workspace settings',
       keywords: ['notes', 'vault', 'editor', 'settings'],
+      headerTitle: 'Luminote',
       iconSvg: DRAWER_TAB_ICON_SVG,
+      guide: { title: 'Luminote Guide', markdown: DRAWER_TAB_GUIDE },
     })
   } catch {
     drawerTab = null // older hosts without drawer tabs — fall back below.
@@ -774,55 +826,7 @@ export function createSettingsDrawerFeature(
         (value) => `${value}px`,
       ),
     ]),
-
-    buildCard('permissions', 'Permissions', [
-      permissionRow('app_manipulation', 'App manipulation', 'Required for the floating-overlay placement.'),
-      permissionRow('ui_panels', 'UI panels', 'Required for the floating widget and the docked placement.'),
-      permissionRow('images', 'Images', 'Art uploads (stills, GIFs, MP4/WebM video) into the host image library instead of inline data URLs.'),
-      permissionRow('media', 'Media', 'Reserved for host FFmpeg video/audio transforms; MP4 & WebM uploads themselves ride the Images store.'),
-      permissionRow('ephemeral_storage', 'Ephemeral storage', 'Optional — keeps a 7-day rolling backup of each note before overwrites.'),
-    ]),
-
-    buildCard('data', 'Data', [
-      el('p', { class: 'lx-settings-note', text: 'Vaults, notes and settings live in the extension\'s scoped storage on the server (data/extensions/luminote/storage). Notes are plain text (markdown sources carry the HTML/SVG islands inline) and are safe to back up directly. With Ephemeral storage granted, every overwrite also leaves a 7-day backup in the host\'s temp pool.' }),
-    ]),
   )
-
-  // ── Permissions section ──
-  function permissionRow(perm: 'app_manipulation' | 'ui_panels' | 'images' | 'media' | 'ephemeral_storage', label: string, hint: string): HTMLElement {
-    const stateEl = el('span', { class: 'lx-perm-state' })
-    const requestBtn = el('button', { class: 'lx-modal-btn lx-perm-btn', text: 'Grant…' })
-    const sync = () => {
-      const granted = store.get().permissions[perm]
-      stateEl.className = `lx-perm-state ${granted ? 'lx-perm-ok' : 'lx-perm-missing'}`
-      stateEl.replaceChildren(icon(granted ? 'check' : 'circleAlert', 12.5), el('span', { text: granted ? 'Granted' : 'Missing' }))
-      requestBtn.classList.toggle('lx-hidden', granted)
-    }
-    requestBtn.addEventListener('click', async () => {
-      try {
-        const granted = await ctx.permissions.request([perm])
-        store.set({
-          permissions: {
-            ...store.get().permissions,
-            [perm]: granted.includes(perm),
-          },
-        })
-      } catch {
-        // User declined — nothing to do.
-      }
-      sync()
-    })
-    sync()
-    const row = el('div', { class: 'lx-setting-row' },
-      el('div', { class: 'lx-setting-text' },
-        el('div', { class: 'lx-setting-label', text: label }),
-        hint ? el('div', { class: 'lx-setting-hint', text: hint }) : null,
-      ),
-      el('div', { class: 'lx-perm-side' }, stateEl, requestBtn),
-    )
-    syncables.push(sync)
-    return row
-  }
 
   const manifest = ctx.manifest
   const container = el('div', { class: 'lx-settings lx-settings-v2' }, header, body, scroll)
@@ -1117,6 +1121,30 @@ export function createSettingsDrawerFeature(
       drawerGutterHosts.add(host)
     }
   }
+  /**
+   * Decorative (muted + looping) videos in the header — banner, avatar,
+   * nameplate — stop playing when the host detaches the drawer tab (tab
+   * switch / drawer close) and reattaches it later: Chromium does NOT
+   * re-trigger `autoplay` on reinsertion. Resume every muted looping video.
+   */
+  const resumeHeaderVideos = () => {
+    for (const v of container.querySelectorAll<HTMLVideoElement>('video')) {
+      if (!v.muted || !v.loop || !v.paused) continue
+      try { void v.play() } catch { /* autoplay policy — ignore */ }
+    }
+  }
+  // Backstop for mid-session pauses: a muted looping video has no controls,
+  // so any pause is unwanted — resume it (covers the detach-pauses and any
+  // browser-initiated pause that reattach alone wouldn't catch).
+  const resumeOnPause = (event: Event) => {
+    const v = event.target
+    if (!(v instanceof HTMLVideoElement)) return
+    if (!v.muted || !v.loop || !v.paused) return
+    try { void v.play() } catch { /* autoplay policy — ignore */ }
+  }
+  container.addEventListener('pause', resumeOnPause, true)
+  disposer.push(() => container.removeEventListener('pause', resumeOnPause, true))
+
   const syncBinding = () => {
     const connected = container.isConnected
     syncDrawerGutterHosts(connected)
@@ -1126,6 +1154,8 @@ export function createSettingsDrawerFeature(
       // automatic cleanup, so unbind-first can never double-listen.
       unbindActions?.()
       unbindActions = ctx.ui.events.bindActionHandlers(container, ACTION_HANDLERS, { attribute: 'data-action' })
+      // Reattach resets autoplay state — restart the decorative videos.
+      requestAnimationFrame(resumeHeaderVideos)
     }
     wasConnected = connected
   }
@@ -1194,9 +1224,6 @@ export function createSettingsDrawerFeature(
   }))
   disposer.push(store.subscribeKey('entries', queueStatsRefresh))
   disposer.push(store.subscribeKey('overlayVisible', () => {
-    for (const sync of syncables) sync()
-  }))
-  disposer.push(store.subscribeKey('permissions', () => {
     for (const sync of syncables) sync()
   }))
   disposer.push(() => { if (statsTimer) clearTimeout(statsTimer) })

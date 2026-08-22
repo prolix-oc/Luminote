@@ -34,6 +34,9 @@ export interface DockShellFeature {
   resetDockWidth?(): void
   /** Parity alias with OverlayFeature. */
   resetWindowSize?(): void
+  /** Live geometry of the host dock panel, so the floating widget's edge snap
+   * can avoid overlapping it. Null when the panel is collapsed or detached. */
+  getDockRect?(): { side: 'left' | 'right'; left: number; right: number } | null
   destroy(): void
 }
 
@@ -300,6 +303,23 @@ export function createDockShellFeature(
       appliedDockWidth = defaultWidth
       applyDockWidth(defaultWidth)
       onDockWidthCommitted(defaultWidth)
+    },
+    getDockRect() {
+      // A collapsed dock (a 36px tab) or a closed panel doesn't occlude the
+      // floating widget, so report nothing in those states.
+      try {
+        if (panel.isCollapsed()) return null
+      } catch { /* older host */ }
+      const hostPanel = panel.root.parentElement?.parentElement
+      if (!hostPanel || !hostPanel.isConnected) return null
+      const rect = hostPanel.getBoundingClientRect()
+      if (rect.width < 1 || rect.height < 1) return null
+      const vw = document.documentElement?.clientWidth || window.innerWidth || 0
+      return {
+        side: rect.left < vw / 2 ? 'left' : 'right',
+        left: rect.left,
+        right: rect.right,
+      }
     },
     destroy() {
       disposer.dispose()

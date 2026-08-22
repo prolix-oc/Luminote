@@ -35,6 +35,8 @@ interface ShellHandle {
   resetWindowSize?(): void
   /** Dock only: restore default dock panel width. */
   resetDockWidth?(): void
+  /** Dock only: the host dock panel's occupied rect (for the widget's edge snap). */
+  getDockRect?(): { side: 'left' | 'right'; left: number; right: number } | null
   destroy(): void
 }
 import { createTreeFeature, type TreeFeature } from './frontend/features/tree/tree-index'
@@ -358,7 +360,11 @@ export function setup(ctx: SpindleFrontendContext) {
 
       buildPlacements()
 
-      widgetFeature = createWidgetFeature(ctx, store, persistSettings)
+      widgetFeature = createWidgetFeature(ctx, store, persistSettings, {
+        // Live lookup: resolves against the current shell at call time, so the
+        // widget's edge snap skips the dock panel whenever it's open.
+        getDockRect: () => shellFeature?.getDockRect?.() ?? null,
+      })
       cleanups.push(() => widgetFeature?.destroy())
 
       try {

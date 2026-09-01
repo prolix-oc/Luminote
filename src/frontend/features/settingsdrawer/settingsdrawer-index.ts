@@ -7,8 +7,9 @@
  *                        art surfaces expose context menus) · quick controls
  *   .lx-setting-body     labelled vault statistics
  *   .lx-setting-scroll   lx-scoped collapsible cards: Editor, Floating
- *                        Widget (including its art), Overlay, Sidebar,
- *                        Status Bar, Vault (including avatar controls).
+ *                        Widget (including its art), Half-dock, Overlay,
+ *                        Settings Panel, Sidebar, Status Bar, and Vault
+ *                        (including avatar controls).
  *                        The former Permissions / Data cards now live in
  *                        the panel-header guide (registerDrawerTab `guide`).
  *
@@ -46,6 +47,7 @@ import {
   DOCK_MAX_DEFAULT,
   type ImageSlot,
   type LuminoteSettings,
+  type SettingsCardSlug,
   type VaultStats,
   type ViewMode,
   type WorkspacePlacement,
@@ -373,17 +375,42 @@ export function createSettingsDrawerFeature(
   // React bridge asynchronously, so tagging rides a mutation observer
   // until every chrome piece has landed (collapsed cards render their
   // content wrapper late).
-  function buildCard(slug: string, title: string, children: HTMLElement[], defaultExpanded = false): HTMLElement {
+  /** Migration-safe lookup for hot rebuilds that briefly retain an older store shape. */
+  function isCardExpanded(slug: SettingsCardSlug): boolean {
+    return store.get().settings.ui.settingsCardsExpanded?.[slug]
+      ?? DEFAULT_SETTINGS.ui.settingsCardsExpanded[slug]
+  }
+
+  function buildCard(slug: SettingsCardSlug, title: string, children: HTMLElement[]): HTMLElement {
     const wrap = el('section', { class: `lx-card lx-card-${slug}`, attrs: { 'data-lx-card': slug } })
     const mountTarget = el('div', { class: 'lx-card-host' })
     wrap.appendChild(mountTarget)
     const section: SpindleCollapsibleSectionHandle = ctx.components.mountCollapsibleSection(mountTarget, {
       title,
-      defaultExpanded,
+      defaultExpanded: isCardExpanded(slug),
+      onToggle: (expanded) => {
+        if (isCardExpanded(slug) === expanded) return
+        patchSettings((settings) => ({
+          ...settings,
+          ui: {
+            ...settings.ui,
+            settingsCardsExpanded: {
+              ...(settings.ui.settingsCardsExpanded ?? DEFAULT_SETTINGS.ui.settingsCardsExpanded),
+              [slug]: expanded,
+            },
+          },
+        }))
+      },
       className: `lx-setting-section lx-setting-section-${slug}`,
     })
     section.body.classList.add('lx-setting-section-body')
     for (const child of children) section.body.appendChild(child)
+    syncables.push(() => {
+      const expanded = isCardExpanded(slug)
+      if (section.isExpanded() === expanded) return
+      if (expanded) section.expand()
+      else section.collapse()
+    })
 
     // The host mounts the React bridge asynchronously AND its component
     // renders the content wrapper as `{isExpanded && <div>}` — collapse
@@ -646,7 +673,7 @@ export function createSettingsDrawerFeature(
     class: 'lx-setting-tile-controls lx-setting-tile-controls-widget',
     attrs: { 'aria-label': 'Widget size and radius' },
   },
-    buildTileSlider('Size', 24, 64,
+    buildTileSlider('Size', 24, 256,
       () => store.get().settings.ui.widgetSize,
       (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, widgetSize: value } })),
       (value) => `${value}px`,
@@ -716,7 +743,7 @@ export function createSettingsDrawerFeature(
         () => String(store.get().settings.editor.autosaveMs) as '0' | '500' | '1200' | '2500' | '5000',
         (value) => patchSettings((s) => ({ ...s, editor: { ...s.editor, autosaveMs: Number(value) } })),
       ),
-    ], true),
+    ]),
 
     buildCard('widget', 'Floating Widget', [
       buildSwitch('Snap to edge', 'The widget glides to the nearest screen edge after a drag.',
@@ -727,7 +754,7 @@ export function createSettingsDrawerFeature(
         () => store.get().settings.ui.widgetSnapAnim,
         (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, widgetSnapAnim: value } })),
       ),
-      buildRange('Snap animation duration', 'How long the snap glide takes.', 0, 600,
+      buildRange('Snap animation duration', 'How long the snap glide takes.', 0, 900,
         () => store.get().settings.ui.widgetSnapAnimMs,
         (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, widgetSnapAnimMs: value } })),
         (value) => `${value}ms`,
@@ -738,6 +765,16 @@ export function createSettingsDrawerFeature(
         (value) => `${value}%`,
       ),
       widgetCustomization,
+    ]),
+
+    buildCard('half-dock', 'Half-dock', [
+      buildRange('Half-dock width', 'Width of the docked workspace panel.', DOCK_MIN_DEFAULT, DOCK_MAX_DEFAULT,
+        () => store.get().settings.ui.dockWidth,
+        (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, dockWidth: value } })),
+        (value) => `${value}px`,
+      ),
+      buildActionRow('Reset dock width', '', 'reset-dock-width', 'Reset dock width'),
+      buildActionRow('Reset panes & splits', '', 'reset-panes', 'Reset panes'),
     ]),
 
     buildCard('overlay', 'Overlay', [
@@ -754,14 +791,15 @@ export function createSettingsDrawerFeature(
       buildActionRow('Reset panes & splits', '', 'reset-panes', 'Reset panes'),
     ]),
 
-    buildCard('half-dock', 'Half-dock', [
-      buildRange('Half-dock width', 'Width of the docked workspace panel.', DOCK_MIN_DEFAULT, DOCK_MAX_DEFAULT,
-        () => store.get().settings.ui.dockWidth,
-        (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, dockWidth: value } })),
-        (value) => `${value}px`,
+    buildCard('settings-panel', 'Settings Panel', [
+      buildSwitch('Show Vault Statistics', 'Show the Vault Statistics block in this settings page.',
+        () => store.get().settings.ui.showVaultRow,
+        (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, showVaultRow: value } })),
       ),
-      buildActionRow('Reset dock width', '', 'reset-dock-width', 'Reset dock width'),
-      buildActionRow('Reset panes & splits', '', 'reset-panes', 'Reset panes'),
+      buildSwitch('Show Settings Avatar', 'Show the vault avatar in the settings panel header.',
+        () => store.get().settings.ui.showSettingsAvatar,
+        (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, showSettingsAvatar: value } })),
+      ),
     ]),
 
     buildCard('sidebar', 'Sidebar', [
@@ -772,6 +810,10 @@ export function createSettingsDrawerFeature(
       buildSwitch('Show file extension', 'Display the ".md" suffix on note rows.',
         () => store.get().settings.tree.showExtension,
         (value) => patchSettings((s) => ({ ...s, tree: { ...s.tree, showExtension: value } })),
+      ),
+      buildSwitch('Show parent folders', 'Display the parent-folder path in each pane header.',
+        () => store.get().settings.tree.showViewHeaderParent,
+        (value) => patchSettings((s) => ({ ...s, tree: { ...s.tree, showViewHeaderParent: value } })),
       ),
       buildSegmented<'icon' | 'text'>('Sort button', 'Choose how the sort control displays as.',
         [
@@ -811,9 +853,9 @@ export function createSettingsDrawerFeature(
     ]),
 
     buildCard('vault', 'Vault', [
-      buildSwitch('Show Vault Statistics', 'Show the Vault Statistics block in this settings page.',
-        () => store.get().settings.ui.showVaultRow,
-        (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, showVaultRow: value } })),
+      buildSwitch('Show Vault Avatar', 'Display the vault avatar in the workspace vault bar.',
+        () => store.get().settings.ui.showVaultAvatar,
+        (value) => patchSettings((s) => ({ ...s, ui: { ...s.ui, showVaultAvatar: value } })),
       ),
       buildSwitch('Show Nameplate Image', 'Render the uploaded nameplate behind the workspace vault bar.',
         () => store.get().settings.ui.showNameplate,
@@ -907,6 +949,7 @@ export function createSettingsDrawerFeature(
     if (document.activeElement !== vaultNameInput) vaultNameInput.value = vault?.name ?? ''
 
     vaultBlock.classList.toggle('lx-hidden', !ui.showVaultRow)
+    avatarContainer.classList.toggle('lx-hidden', !ui.showSettingsAvatar)
   }
 
   // ── Stats (debounced; the drawer fetches only the active vault) ──

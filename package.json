@@ -10,9 +10,10 @@
   ],
   "scripts": {
     "build": "rm -rf dist && bun build src/backend.ts --outfile=dist/backend.js --target=bun && bun build src/frontend.ts --outfile=dist/frontend.js --target=browser",
+    "test": "bun test",
     "typecheck": "tsc --noEmit",
     "verify:release": "bun scripts/verify-release.ts",
-    "release:check": "bun run typecheck && bun run build && bun run verify:release"
+    "release:check": "bun run typecheck && bun test && bun run build && bun run verify:release"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.3",

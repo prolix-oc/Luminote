@@ -5,6 +5,7 @@
  * topic subscribers.
  */
 import { isIpcEnvelope, type IpcEvent, type IpcRequest, type IpcResponse, type OpName } from '../shared/model'
+import { uuidv7 } from '../shared/uuid'
 import type { SpindleFrontendContext } from 'lumiverse-spindle-types'
 
 interface PendingRequest {
@@ -62,7 +63,7 @@ export function createRpc(ctx: SpindleFrontendContext): RpcClient {
           reject(new Error('RPC client destroyed'))
           return
         }
-        const id = globalThis.crypto.randomUUID()
+        const id = uuidv7()
         const timer = setTimeout(() => {
           pending.delete(id)
           reject(new Error(`${op} timed out — is the Luminote backend running?`))

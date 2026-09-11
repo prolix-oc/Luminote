@@ -27,6 +27,7 @@ import {
   type WorkspaceSnapshot,
 } from '../shared/model'
 import { normalizeArtMime } from '../shared/media-types'
+import { uuidv7 } from '../shared/uuid'
 
 declare const spindle: import('lumiverse-spindle-types').SpindleAPI
 
@@ -47,10 +48,6 @@ function withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
 // ── Small helpers ───────────────────────────────────────────────────────
 
 const encoder = new TextEncoder()
-
-function newId(): string {
-  return globalThis.crypto.randomUUID()
-}
 
 async function readJson<T>(path: string, fallback: T): Promise<T> {
   return spindle.storage.getJson<T>(path, { fallback })
@@ -122,7 +119,7 @@ export async function createVault(name: string): Promise<VaultMeta> {
     const taken = new Set(vaults.map((v) => v.name.toLowerCase()))
     let finalName = trimmed
     for (let i = 2; taken.has(finalName.toLowerCase()); i++) finalName = `${trimmed} ${i}`
-    const vault: VaultMeta = { id: newId(), name: finalName, createdAt: Date.now(), pfp: null, pfpDecor: null, nameplate: null }
+    const vault: VaultMeta = { id: uuidv7(), name: finalName, createdAt: Date.now(), pfp: null, pfpDecor: null, nameplate: null }
     vaults.push(vault)
     await writeVaults(vaults)
     await spindle.storage.setJson(entriesPath(vault.id), [])
@@ -582,7 +579,7 @@ export async function createEntry(
       .reduce((acc, e) => Math.max(acc, e.order), 0)
 
     const entry: VaultEntry = {
-      id: newId(),
+      id: uuidv7(),
       name,
       kind,
       parentId,

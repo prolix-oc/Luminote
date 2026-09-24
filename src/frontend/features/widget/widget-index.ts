@@ -2,10 +2,10 @@
  * Widget feature — the small floating button that toggles the workspace.
  *
  * Uses `ctx.ui.createFloatWidget` (ui_panels permission). The widget is
- * chromeless (the extension owns its presentation), reflects whether the
- * workspace is open, and persists its position through the settings
- * channel. Custom icon + decoration images (stills, GIFs or video), size,
- * radius, transparency, and snap behavior all live in Settings.
+ * host-framed so native pop-outs retain their Return-to-page control. It
+ * reflects whether the workspace is open and persists its position through
+ * the settings channel. Custom icon + decoration images (stills, GIFs or
+ * video), size, radius, transparency, and snap behavior all live in Settings.
  *
  * Staging enhancements:
  *  - Viewport-aware dynamic clamping (smoothly bounds position on load & resize)
@@ -107,12 +107,6 @@ export function snapTarget(
   return { x: snapX, y: snapY }
 }
 
-/** Extended staging handle methods if present on the host instance. */
-type FloatWidgetHandleExtended = SpindleFloatWidgetHandle & {
-  setSize?: (width: number, height: number) => void
-  isVisible?: () => boolean
-}
-
 export function createWidgetFeature(
   ctx: SpindleFrontendContext,
   store: Store,
@@ -125,7 +119,7 @@ export function createWidgetFeature(
   disposer.push(() => ac.abort())
   const signal = ac.signal
 
-  let widget: FloatWidgetHandleExtended | null = null
+  let widget: SpindleFloatWidgetHandle | null = null
   let button: HTMLButtonElement | null = null
   let unsubs: Array<() => void> = []
 
@@ -362,10 +356,9 @@ export function createWidgetFeature(
         initialPosition: initialPos,
         snapToEdge: false,
         tooltip: 'Luminote',
-        chromeless: true,
+        chromeless: false,
       }
-      ;(floatOptions as SpindleFloatWidgetOptions & { resizable?: boolean }).resizable = false
-      widget = ctx.ui.createFloatWidget(floatOptions) as FloatWidgetHandleExtended
+      widget = ctx.ui.createFloatWidget(floatOptions)
     } catch (err) {
       console.warn('[luminote] Float widget unavailable:', err)
       widget = null

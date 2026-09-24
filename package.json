@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/dompurify": "^3.2.0",
-    "lumiverse-spindle-types": "0.6.15",
+    "lumiverse-spindle-types": "0.6.36",
     "typescript": "^5.9.3"
   }
 }

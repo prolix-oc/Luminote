@@ -28,3 +28,9 @@ This type-checks the source, produces `dist/backend.js` and `dist/frontend.js`, 
 4. Preserve Coffee's original-author attribution in the release listing and any accompanying announcement.
 
 Luminote requests `app_manipulation`, `ui_panels`, `images`, `media`, and `ephemeral_storage` permissions. Its dynamic-code-execution capability declaration is required by bundled dependencies that can trigger Lumiverse's static scanner.
+
+## Floating widget on Lumiverse Desktop
+
+If you pop out the Luminote launcher as a native floating widget, use **Return to page** in the widget's host title bar to dismiss the pop-out. The desktop tray's **Floating Widgets → Return Luminote · Widget 1 to Page** action is another way back. The floating *workspace* in the main Lumiverse page has its own minimize, maximize, restore, and close buttons.
+
+Spindle's floating-widget API does not expose native pop-out minimize, maximize, or close controls. Those require support in Lumiverse Desktop.
